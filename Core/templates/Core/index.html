@@ -41,10 +41,10 @@
                     <div id="transaction_lines_table">
                         <div class="table-responsive">
 
-                              <h2>Send Payloads to HIM</h2>
+                            <h2>Send Payloads to HIM</h2>
 
 
-                            <a href="{% url 'send_services_received' %}" type="button" class="btn btn-primary round width-200 buttonAnimation">
+                            <a id="services_received" href="{% url 'send_services_received' %}" type="button" class="btn btn-primary round width-200 buttonAnimation">
                                 <i class="la la-scissors"></i>Services Received
                             </a>
 
@@ -76,3 +76,58 @@
 
 
 {% endblock %}
+
+
+<script src="{% static "app-assets/vendors/js/extensions/sweetalert.min.js" %}"></script>
+<script src="{% static "app-assets/js/scripts/extensions/sweet-alerts.js" %}"></script>
+
+<script>
+
+    $('#services_received').on("click", function(event)
+    {
+
+        var url = "{% url 'send_revenue_received' %}";
+
+
+        swal({
+            title: "Are you sure you want to send services received?",
+            text: ".",
+            icon: "warning",
+            buttons: [
+                'No, cancel it!',
+                'Yes, I am sure!'
+            ],
+            dangerMode: true,
+        }).then(function(isConfirm) {
+            if (isConfirm) {
+                {
+                    $.ajax({
+                        type: "POST",
+                        url: url,
+                        success: function(data)
+                        {
+                            swal("Success!", "Services received uploaded successfully.", "success");
+
+                        },
+                        error: function (XMLHttpRequest, textStatus, errorThrown) {
+
+
+
+                            swal("Error!", "Deleting frequency failed!", "error");
+
+                        }
+                    });
+
+                    e.preventDefault(); // avoid to execute the actual submit of the form.
+                });
+    }
+    else {
+        swal("Cancelled", "Deleting cancelled :)", "error");
+    }
+
+    });
+
+    e.preventDefault(); // avoid to execute the actual submit of the form.
+
+    });
+</script>
