@@ -17,10 +17,13 @@ him_death_by_disease_outside_facility_url = config('HIM_DEATH_BY_DISEASE_OUTSIDE
 him_username = config('HIM_USERNAME')
 him_password = config('HIM_PASSWORD')
 
+org_name = config('ORGANISATION_NAME')
+facility_hfr_code = config('FACILITY_HFR_CODE')
+
 
 # Create your views here.
 def get_index_page(request):
-    return render(request, 'Core/index.html')
+    return render(request, 'Core/index.html', {"organisation_name": org_name, "facility_hfr_code":facility_hfr_code})
 
 
 def import_icd_10_codes(request):
@@ -223,14 +226,47 @@ def send_bed_occupancy_payload(request):
 
             row = cursor.fetchall()
 
-    services_received = row
+    bed_occupancies = row
 
-    bed_occupancy_json_data = json.dumps(services_received)
+    message_type = "BEDOCC"
 
-    response = requests.post(him_bed_occupancy_url, auth=(him_username, him_password), data=bed_occupancy_json_data,
+    bed_occupancy_items = []
+
+    for bed_occupancy in bed_occupancies:
+        formatted_tuple = tuple(bed_occupancy)
+
+        ward_id = formatted_tuple[0]
+        ward_name = formatted_tuple[1]
+        patient_id = formatted_tuple[2]
+        admission_date = str(formatted_tuple[3])
+        discharge_date = str(formatted_tuple[4])
+
+        bed_occupancy_object = {"wardId": ward_id, "wardName": ward_name, "patId": patient_id,
+                                "admissionDate": admission_date, "dischargeDate": discharge_date}
+
+        bed_occupancy_items.append(bed_occupancy_object)
+
+
+    payload = {
+        "messageType": message_type,
+        "orgName": org_name,
+        "facilityHfrCode": facility_hfr_code,
+        "items": bed_occupancy_items
+    }
+
+    json_payload = json.dumps(payload)
+
+    response = requests.post(him_bed_occupancy_url, auth=(him_username, him_password), data=json_payload,
                              headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
 
-    return HttpResponse(".")
+    print(response.status_code)
+
+    if response.status_code == 200:
+        return HttpResponse("Bed Occupancy data uploaded")
+    elif response.status_code == 401:
+        return HttpResponse("Unauthorized access")
+    else:
+        return HttpResponse("failed")
 
 
 def send_revenue_received_payload(request):
