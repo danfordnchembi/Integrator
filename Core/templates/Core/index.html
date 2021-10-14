@@ -1,0 +1,139 @@
+{% extends 'base_component.html' %}
+{% load static %}
+
+{% block content %}
+
+    <div class="row" id="department_mappings">
+        <div class="col-md-12 col-sm-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Payload Administrations</h4>
+                </div>
+
+
+                <div class="row">
+
+                    <div class="col-md-2">
+
+                        <h4 class="mb-3 text-primary" align="center"><i><b></b></i></h4>
+
+                    </div>
+
+                </div>
+
+                <div class="card-body">
+
+                    <div id="transaction_lines_table">
+                        <div class="table-responsive">
+                            <div class="card">
+                                <h2>Facility Name: {{ organisation_name }}</h2>
+                                <h2>Facility HFR Code: {{ facility_hfr_code }}</h2>
+                            </div>
+
+
+                            <h2>Import Standards</h2>
+
+                            <a href="{% url 'import_icd10_codes' %}" type="button" class="btn btn-primary round width-200 buttonAnimation">
+                                <i class="la la-download"></i>Import ICD10 Codes
+                            </a>
+
+                            <a href="{% url 'import_cpt_codes' %}" type="button" class="btn btn-success round width-200 buttonAnimation">
+                                <i class="la la-download"></i>Import CPT Codes
+                            </a>
+
+{#                        </div>#}
+                    </div> <br /> <br />
+
+                    <div id="transaction_lines_table">
+                        <div class="table-responsive">
+
+                            <h2>Send Payloads to HIM</h2>
+
+
+                            <a id="services_received" href="{% url 'send_services_received' %}" type="button" class="btn btn-primary round width-200 buttonAnimation">
+                                <i class="la la-scissors"></i>Services Received
+                            </a>
+
+                            <a href="{% url 'send_revenue_received' %}" type="button" class="btn btn-warning round width-200 buttonAnimation">
+                                <i class="la la-money"></i>Revenue Received
+                            </a>
+
+                            <a href="{% url 'send_bed_occupancy' %}" type="button" class="btn btn-success round width-200 buttonAnimation">
+                                <i class="la la-bed"></i>Bed Occupancy
+                            </a>
+
+                            <a href="{% url 'send_death_outside_facility' %}" type="button" class="btn btn-info round width-200 buttonAnimation">
+                                <i class="la la-home"></i>Death Outside Facility
+                            </a>
+
+                            <a href="{% url 'send_death_in_facility' %}" type="button" class="btn btn-danger round width-200 buttonAnimation">
+                                <i class="la la-home"></i>Death in Facility
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+{% endblock %}
+
+
+<script src="{% static "app-assets/vendors/js/extensions/sweetalert.min.js" %}"></script>
+<script src="{% static "app-assets/js/scripts/extensions/sweet-alerts.js" %}"></script>
+
+<script>
+
+    $('#services_received').on("click", function(event)
+    {
+
+        var url = "{% url 'send_revenue_received' %}";
+
+
+        swal({
+            title: "Are you sure you want to send services received?",
+            text: ".",
+            icon: "warning",
+            buttons: [
+                'No, cancel it!',
+                'Yes, I am sure!'
+            ],
+            dangerMode: true,
+        }).then(function(isConfirm) {
+            if (isConfirm) {
+                {
+                    $.ajax({
+                        type: "POST",
+                        url: url,
+                        success: function(data)
+                        {
+                            swal("Success!", "Services received uploaded successfully.", "success");
+
+                        },
+                        error: function (XMLHttpRequest, textStatus, errorThrown) {
+
+
+
+                            swal("Error!", "Deleting frequency failed!", "error");
+
+                        }
+                    });
+
+                    e.preventDefault(); // avoid to execute the actual submit of the form.
+                });
+    }
+    else {
+        swal("Cancelled", "Deleting cancelled :)", "error");
+    }
+
+    });
+
+    e.preventDefault(); // avoid to execute the actual submit of the form.
+
+    });
+</script>
