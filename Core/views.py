@@ -184,15 +184,12 @@ def import_cpt_codes(request):
 
 def send_services_received_payload(request):
     if config("EMR_NAME") == "Jeeva":
-        #conn = db.connect("DATABASE=DUMMYDB;HOSTNAME=192.168.10.110;PORT=60000;PROTOCOL=TCPIP;UID=DUMMY;PWD=NAPIER;", "", "")
         conn = pyodbc.connect('DSN=JEEVADB;UID=JEEVADB;PASSWORD=SVRJEEVAJV')
         cursor = conn.cursor()
 
         cursor.execute('''''' + config('SERVICES_RECEIVED_PAYLOAD') + '''''')
 
         row = cursor.fetchall()
-
-        print(row)
 
     else:
         cursor = connection.cursor()
@@ -204,17 +201,52 @@ def send_services_received_payload(request):
 
     services_received = row
 
-    services_received_json_data = json.dumps(services_received)
+    message_type = "SVCREC"
 
-    response = requests.post(him_services_received_url, auth=(him_username, him_password), data=services_received_json_data,
-                                     headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
+    service_received_items = []
 
-    return HttpResponse(".")
+    for service_received in services_received:
+        formatted_tuple = tuple(service_received)
+
+        dept_id = formatted_tuple[0]
+        dept_name = formatted_tuple[1]
+        patient_id = formatted_tuple[2]
+        gender = formatted_tuple[3]
+        dob = str(formatted_tuple[4])
+        med_svc_code = formatted_tuple[5]
+        icd_10_code = formatted_tuple[6]
+        service_date = str(formatted_tuple[7])
+        service_provider_ranking_id = str(formatted_tuple[8])
+        visit_type = formatted_tuple[9]
+
+        service_received_object = {"deptName": dept_name, "deptId": dept_id, "patId": patient_id,
+                                "gender": gender, "dob": dob, "medSvcCode":med_svc_code, "icd10Code": icd_10_code,
+                                "serviceDate":service_date,"serviceProviderRankingId": service_provider_ranking_id, "visitType":visit_type}
+
+        service_received_items.append(service_received_object)
+
+    payload = {
+        "messageType": message_type,
+        "orgName": org_name,
+        "facilityHfrCode": facility_hfr_code,
+        "items": service_received_items
+    }
+
+    json_payload = json.dumps(payload)
+
+    response = requests.post(him_services_received_url, auth=(him_username, him_password), data=json_payload,
+                             headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
+
+    if response.status_code == 200:
+        return HttpResponse("Service received data uploaded")
+    elif response.status_code == 401:
+        return HttpResponse("Unauthorized access")
+    else:
+        return HttpResponse("failed")
 
 
 def send_bed_occupancy_payload(request):
     if config("EMR_NAME") == "Jeeva":
-        #conn = db.connect("DATABASE=name;HOSTNAME=host;PORT=60000;PROTOCOL=TCPIP;UID=username;PWD=password;", "", "")
         conn = pyodbc.connect('DSN=JEEVADB;UID=JEEVADB;PASSWORD=SVRJEEVAJV')
         cursor = conn.cursor()
 
@@ -275,7 +307,6 @@ def send_bed_occupancy_payload(request):
 
 def send_revenue_received_payload(request):
     if config("EMR_NAME") == "Jeeva":
-        #conn = db.connect("DATABASE=name;HOSTNAME=host;PORT=60000;PROTOCOL=TCPIP;UID=username;PWD=password;", "", "")
         conn = pyodbc.connect('DSN=JEEVADB;UID=JEEVADB;PASSWORD=SVRJEEVAJV')
         cursor = conn.cursor()
 
@@ -293,17 +324,54 @@ def send_revenue_received_payload(request):
 
     revenue_received = row
 
-    revenue_received_json_data = json.dumps(revenue_received)
+    message_type = "REV"
 
-    response = requests.post(him_revenue_received_url, auth=(him_username, him_password), data=revenue_received_json_data,
+    revenue_received_items = []
+
+    for revenue in revenue_received:
+        formatted_tuple = tuple(revenue)
+
+        system_trans_id = str(formatted_tuple[0])
+        transaction_date = str(formatted_tuple[1])
+        patient_id = str(formatted_tuple[2])
+        gender = formatted_tuple[3]
+        dob = str(formatted_tuple[4])
+        med_svc_code = formatted_tuple[5]
+        payer_id = str(formatted_tuple[6])
+        exemption_category_id = str(formatted_tuple[7])
+        billed_amount = formatted_tuple[8]
+        waived_amount = formatted_tuple[9]
+        service_provider_ranking_id = str(formatted_tuple[10])
+
+        revenue_received_object = {"systemTransId": system_trans_id, "transactionDate": transaction_date, "patId": patient_id,
+                                   "gender": gender, "dob": dob, "medSvcCode": med_svc_code, "payerId": payer_id,
+                                   "exemptionCategoryId": exemption_category_id, "billedAmount": billed_amount,
+                                   "waivedAmount": waived_amount, "serviceProviderRankingId": service_provider_ranking_id}
+
+        revenue_received_items.append(revenue_received_object)
+
+    payload = {
+        "messageType": message_type,
+        "orgName": org_name,
+        "facilityHfrCode": facility_hfr_code,
+        "items": revenue_received_items
+    }
+
+    json_payload = json.dumps(payload)
+
+    response = requests.post(him_revenue_received_url, auth=(him_username, him_password), data=json_payload,
                              headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
 
-    return HttpResponse(".")
+    if response.status_code == 200:
+        return HttpResponse("Revenue received data uploaded")
+    elif response.status_code == 401:
+        return HttpResponse("Unauthorized access")
+    else:
+        return HttpResponse("failed")
 
 
 def send_death_by_disease_in_facility_payload(request):
     if config("EMR_NAME") == "Jeeva":
-        #conn = db.connect("DATABASE=name;HOSTNAME=host;PORT=60000;PROTOCOL=TCPIP;UID=username;PWD=password;", "", "")
         conn = pyodbc.connect('DSN=JEEVADB;UID=JEEVADB;PASSWORD=SVRJEEVAJV')
         cursor = conn.cursor()
 
@@ -321,18 +389,51 @@ def send_death_by_disease_in_facility_payload(request):
 
     death_by_disease_in_facility = row
 
-    death_by_disease_in_facility_json_data = json.dumps(death_by_disease_in_facility)
+    message_type = "DDC"
 
-    response = requests.post(him_death_by_disease_in_facility_url, auth=(him_username, him_password),
-                             data=death_by_disease_in_facility_json_data,
+    death_in_facility_items = []
+
+    for death in death_by_disease_in_facility:
+        formatted_tuple = tuple(death)
+
+        ward_id = str(formatted_tuple[0])
+        ward_name = str(formatted_tuple[1])
+        patient_id = str(formatted_tuple[2])
+        icd_10_code = str(formatted_tuple[3])
+        gender = formatted_tuple[4]
+        dob = str(formatted_tuple[5])
+        date_death_occured = formatted_tuple[6]
+
+
+        death_in_facility_object = {"wardId": ward_id, "wardName": ward_name,
+                                   "patId": patient_id,
+                                   "icd10Code": icd_10_code, "gender": gender, "dob": dob,
+                                    "dateDeathOccurred": date_death_occured}
+
+        death_in_facility_items.append(death_in_facility_object)
+
+    payload = {
+        "messageType": message_type,
+        "orgName": org_name,
+        "facilityHfrCode": facility_hfr_code,
+        "items": death_in_facility_items
+    }
+
+    json_payload = json.dumps(payload)
+
+    response = requests.post(him_death_by_disease_in_facility_url, auth=(him_username, him_password), data=json_payload,
                              headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
 
-    return HttpResponse(".")
+    if response.status_code == 200:
+        return HttpResponse("Death in facility data uploaded")
+    elif response.status_code == 401:
+        return HttpResponse("Unauthorized access")
+    else:
+        return HttpResponse("failed")
 
 
 def send_death_by_disease_outside_facility_payload(request):
     if config("EMR_NAME") == "Jeeva":
-        #conn = db.connect("DATABASE=name;HOSTNAME=host;PORT=60000;PROTOCOL=TCPIP;UID=username;PWD=password;", "", "")
         conn = pyodbc.connect('DSN=JEEVADB;UID=JEEVADB;PASSWORD=SVRJEEVAJV')
         cursor = conn.cursor()
 
@@ -348,14 +449,45 @@ def send_death_by_disease_outside_facility_payload(request):
 
             row = cursor.fetchall()
 
-    death_by_disease_in_facility = row
+    death_by_disease_outside_facility = row
 
-    death_by_disease_in_facility_json_data = json.dumps(death_by_disease_in_facility)
+    message_type = "DDCOUT"
 
-    response = requests.post(him_services_received_url, auth=(him_username, him_password),
-                             data=death_by_disease_in_facility_json_data,
+    death_outside_facility_items = []
+
+    for death in death_by_disease_outside_facility:
+        formatted_tuple = tuple(death)
+
+        death_id = str(formatted_tuple[0])
+        place_of_death_id = str(formatted_tuple[1])
+        icd_10_code = str(formatted_tuple[3])
+        gender = formatted_tuple[4]
+        dob = str(formatted_tuple[5])
+        date_death_occured = formatted_tuple[6]
+
+        death_in_facility_object = {"deathId": death_id, "placeOfDeathId": place_of_death_id,
+                                    "icd10Code": icd_10_code,
+                                    "gender": gender, "dob": dob, "dateDeathOccurred": date_death_occured}
+
+        death_outside_facility_items.append(death_in_facility_object)
+
+    payload = {
+        "messageType": message_type,
+        "orgName": org_name,
+        "facilityHfrCode": facility_hfr_code,
+        "items": death_outside_facility_items
+    }
+
+    json_payload = json.dumps(payload)
+
+    response = requests.post(him_death_by_disease_outside_facility_url, auth=(him_username, him_password), data=json_payload,
                              headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
 
-    return HttpResponse(".")
+    if response.status_code == 200:
+        return HttpResponse("Death outside facility data uploaded")
+    elif response.status_code == 401:
+        return HttpResponse("Unauthorized access")
+    else:
+        return HttpResponse("failed")
 
 
