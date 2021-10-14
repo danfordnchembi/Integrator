@@ -11,6 +11,7 @@ requests = "*"
 django-crispy-forms = "*"
 ibm-db = "*"
 mysqlclient = "*"
+pyodbc = "*"
 
 [dev-packages]
 
