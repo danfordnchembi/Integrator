@@ -12,6 +12,7 @@ django-crispy-forms = "*"
 ibm-db = "*"
 mysqlclient = "*"
 pyodbc = "*"
+django-tables2 = "*"
 
 [dev-packages]
 

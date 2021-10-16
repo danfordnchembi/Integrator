@@ -4,8 +4,13 @@ from Core import models as core_models
 from django.db import connection, connections
 from decouple import config
 from django.http import HttpResponse
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 import pyodbc
+import csv
+from Core import forms as core_forms
+from Core import tables as core_tables
+from django.core.files.storage import FileSystemStorage
+from django_tables2 import RequestConfig
 
 
 him_services_received_url = config('HIM_SERVICES_RECEIVED_URL')
@@ -23,7 +28,16 @@ facility_hfr_code = config('FACILITY_HFR_CODE')
 
 # Create your views here.
 def get_index_page(request):
-    return render(request, 'Core/index.html', {"organisation_name": org_name, "facility_hfr_code":facility_hfr_code})
+    cpt_code_mappings = core_models.CPTCodesMapping.objects.all()
+    cpt_code_mappings_table = core_tables.CPTCodeMappingTable(cpt_code_mappings)
+    cpt_code_mapping_import_form = core_forms.CPTCodeMappingImportForm()
+    cpt_code_mapping_form = core_forms.CPTCodesMappingForm()
+    RequestConfig(request, paginate={"per_page": 10}).configure(cpt_code_mappings_table)
+    return render(request, 'Core/index.html', {"organisation_name": org_name, "facility_hfr_code":facility_hfr_code,
+                                               "cpt_code_mappings_table": cpt_code_mappings_table,
+                                               "cpt_code_mapping_import_form":cpt_code_mapping_import_form,
+                                               "cpt_code_mapping_form":cpt_code_mapping_form
+                                               })
 
 
 def import_icd_10_codes(request):
@@ -38,7 +52,7 @@ def import_icd_10_codes(request):
         if query is None:
             # # insert category
             instance_category = core_models.ICD10CodeCategory()
-            instance_category.local_id = x["id"]
+            instance_category.hdr_local_id = x["id"]
             instance_category.description = x["description"]
             instance_category.save()
         else:
@@ -58,7 +72,7 @@ def import_icd_10_codes(request):
                 last_category = core_models.ICD10CodeCategory.objects.all().last()
 
                 instance_sub_category = core_models.ICD10CodeSubCategory()
-                instance_sub_category.local_id = sub_category_id
+                instance_sub_category.hdr_local_id = sub_category_id
                 instance_sub_category.description = sub_category_name
                 instance_sub_category.category_id = last_category.id
                 instance_sub_category.save()
@@ -82,7 +96,7 @@ def import_icd_10_codes(request):
                     instance_icd_code = core_models.ICD10Code()
                     last_sub_category = core_models.ICD10CodeSubCategory.objects.all().last()
                     instance_icd_code.sub_category_id =  last_sub_category.id
-                    instance_icd_code.local_id = icd_10_id
+                    instance_icd_code.hdr_local_id = icd_10_id
                     instance_icd_code.code = icd_10_code
                     instance_icd_code.description = icd_10_description
                     instance_icd_code.save()
@@ -106,7 +120,7 @@ def import_icd_10_codes(request):
 
                         last_code = core_models.ICD10Code.objects.all().last()
                         instance_icd_sub_code.code_id = last_code.id
-                        instance_icd_sub_code.local_id = icd_10_sub_code_id
+                        instance_icd_sub_code.hdr_local_id = icd_10_sub_code_id
                         instance_icd_sub_code.sub_code = icd_10_sub_code
                         instance_icd_sub_code.description = icd_10_sub_code_description
                         instance_icd_sub_code.save()
@@ -129,7 +143,7 @@ def import_cpt_codes(request):
 
         if query is None:
             instance_category = core_models.CPTCodeCategory()
-            instance_category.local_id = x["id"]
+            instance_category.hdr_local_id = x["id"]
             instance_category.description = x["description"]
             instance_category.save()
         else:
@@ -148,7 +162,7 @@ def import_cpt_codes(request):
             if query is None:
                 # insert sub category
                 instance_sub_category = core_models.CPTCodeSubCategory()
-                instance_sub_category.local_id = sub_category_id
+                instance_sub_category.hdr_local_id = sub_category_id
                 instance_sub_category.description = sub_category_description
                 instance_sub_category.category_id = last_category.id
                 instance_sub_category.save()
@@ -170,12 +184,12 @@ def import_cpt_codes(request):
                     # # insert icd code
                     instance_cpt_code = core_models.CPTCode()
                     instance_cpt_code.sub_category_id = instance_sub_category.id
-                    instance_cpt_code.local_id = code_id
+                    instance_cpt_code.hdr_local_id = code_id
                     instance_cpt_code.code = code_local_id
                     instance_cpt_code.description = code_description
                     instance_cpt_code.save()
                 else:
-                    query.code = code_id
+                    query.code = code_local_id
                     query.description = code_description
                     query.save()
 
@@ -399,14 +413,18 @@ def send_death_by_disease_in_facility_payload(request):
         ward_id = str(formatted_tuple[0])
         ward_name = str(formatted_tuple[1])
         patient_id = str(formatted_tuple[2])
-        icd_10_code = str(formatted_tuple[3])
-        gender = formatted_tuple[4]
-        dob = str(formatted_tuple[5])
-        date_death_occured = formatted_tuple[6]
+        first_name = str(formatted_tuple[3])
+        middle_name = str(formatted_tuple[4])
+        last_name = str(formatted_tuple[5])
+        icd_10_code = str(formatted_tuple[6])
+        gender = formatted_tuple[7]
+        dob = str(formatted_tuple[8])
+        date_death_occured = formatted_tuple[9]
 
 
         death_in_facility_object = {"wardId": ward_id, "wardName": ward_name,
-                                   "patId": patient_id,
+                                   "patId": patient_id,"firstName":first_name, "middleName":middle_name,
+                                    "lastName":last_name,
                                    "icd10Code": icd_10_code, "gender": gender, "dob": dob,
                                     "dateDeathOccurred": date_death_occured}
 
@@ -491,3 +509,70 @@ def send_death_by_disease_outside_facility_payload(request):
         return HttpResponse("failed")
 
 
+def download_cpt_codes_as_csv(request):
+    queryset = core_models.CPTCode.objects.all()
+    opts = queryset.model._meta
+    model = queryset.model
+    response = HttpResponse(content_type='text/csv')
+    # force download.
+    response['Content-Disposition'] = 'attachment;filename=CPTCodesMappings.csv'
+    # the csv writer
+    writer = csv.writer(response)
+    field_names = [field.name for field in opts.fields]
+    field_names.append('local_code')
+    # Write a first row with header information
+    writer.writerow(field_names)
+
+    field_names.remove('local_code')
+
+    # Write data rows
+    for obj in queryset:
+        writer.writerow([getattr(obj, field) for field in field_names])
+    return response
+
+
+def upload_cpt_codes(request):
+    if request.method == "POST":
+        cpt_codes_import_form = core_forms.CPTCodeMappingImportForm(request.POST, request.FILES)
+        if cpt_codes_import_form.is_valid():
+            cpt_codes_import_form.full_clean()
+
+            file = cpt_codes_import_form.cleaned_data['file']
+
+            if not file.name.endswith('.csv'):
+                pass
+            else:
+                fs = FileSystemStorage()
+                filename = fs.save(file.name, file)
+                file_path = fs.path(filename)
+                save_cpt_code_entries(file_path)
+        return redirect(request.META['HTTP_REFERER'])
+
+
+def save_cpt_code_entries(file_path):
+    # Delete all previous mappings
+
+    instance_previous_mappings = core_models.CPTCodesMapping.objects.all()
+    instance_previous_mappings.delete()
+
+    with open(file_path, 'r') as fp:
+        lines = csv.reader(fp, delimiter=',')
+
+        row = 0
+        for line in lines:
+            print(line)
+            if line is not None:
+                if row == 0:
+                    headers = line
+                    row = row + 1
+                else:
+                    print(line[3])
+                    print(line[5])
+                    instance_cpt_code_mappings = core_models.CPTCodesMapping()
+                    instance_cpt_code_mappings.cpt_code_id = line[3]
+                    instance_cpt_code_mappings.local_code = line[5]
+
+                    instance_cpt_code_mappings.save()
+
+            row = row + 1
+    fp.close()

@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "36da9fb33493d71d224ca8cb9b92d4253a7e4b97582ea07be28c82bfccd1152e"
+            "sha256": "d00be77d98ccce7589ef1b0e7ee110a634cb3ec52b0257d40ca6a1c70e769015"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -54,6 +54,14 @@
             ],
             "index": "pypi",
             "version": "==1.13.0"
+        },
+        "django-tables2": {
+            "hashes": [
+                "sha256:50762bf3d7c61a4eb70e763c3e278650d7266bb78d0497fc8fafcf4e507c9a64",
+                "sha256:6c72dd208358539e789e4c0efd7d151e43283a4aa4093a35f44c43489e7ddeaa"
+            ],
+            "index": "pypi",
+            "version": "==2.4.1"
         },
         "ibm-db": {
             "hashes": [

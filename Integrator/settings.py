@@ -42,7 +42,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'Core',
-    'UserManagement'
+    'UserManagement',
+    'crispy_forms',
+    'django_tables2',
 ]
 
 MIDDLEWARE = [

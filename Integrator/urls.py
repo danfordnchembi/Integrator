@@ -29,4 +29,6 @@ urlpatterns = [
     path('send_death_outside_facility/', core_views.send_death_by_disease_outside_facility_payload,
          name="send_death_outside_facility"),
     path('send_death_in_facility/', core_views.send_death_by_disease_in_facility_payload, name="send_death_in_facility"),
+    path('download_cpt_codes_as_csv', core_views.download_cpt_codes_as_csv, name='download_cpt_codes_as_csv'),
+    path('upload_cpt_codes', core_views.upload_cpt_codes, name='upload_cpt_codes'),
 ]
