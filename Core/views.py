@@ -47,7 +47,7 @@ def import_icd_10_codes(request):
 
     for x in data:
 
-        query = core_models.ICD10CodeCategory.objects.filter(local_id=x["id"]).first()
+        query = core_models.ICD10CodeCategory.objects.filter(hdr_local_id=x["id"]).first()
 
         if query is None:
             # # insert category
@@ -65,7 +65,7 @@ def import_icd_10_codes(request):
             sub_category_id = sub_category["id"]
             sub_category_name = sub_category['description']
 
-            query = core_models.ICD10CodeSubCategory.objects.filter(local_id=sub_category_id).first()
+            query = core_models.ICD10CodeSubCategory.objects.filter(hdr_local_id=sub_category_id).first()
 
             if query is None:
                 # # insert sub category
@@ -89,7 +89,7 @@ def import_icd_10_codes(request):
                 icd_10_code = sub_sub_category["code"]
                 icd_10_description = sub_sub_category["description"]
 
-                query = core_models.ICD10Code.objects.filter(local_id=icd_10_id).first()
+                query = core_models.ICD10Code.objects.filter(hdr_local_id=icd_10_id).first()
 
                 if query is None:
                     # # insert icd code
@@ -112,7 +112,7 @@ def import_icd_10_codes(request):
                     icd_10_sub_code = y["sub_code"]
                     icd_10_sub_code_description = y["description"]
 
-                    query = core_models.ICD10SubCode.objects.filter(local_id=icd_10_sub_code_id).first()
+                    query = core_models.ICD10SubCode.objects.filter(hdr_local_id=icd_10_sub_code_id).first()
 
                     if query is None:
                         # # insert icd sub code
@@ -139,7 +139,7 @@ def import_cpt_codes(request):
 
     for x in data:
         # # insert category
-        query = core_models.CPTCodeCategory.objects.filter(local_id=x["id"]).first()
+        query = core_models.CPTCodeCategory.objects.filter(hdr_local_id=x["id"]).first()
 
         if query is None:
             instance_category = core_models.CPTCodeCategory()
@@ -156,7 +156,7 @@ def import_cpt_codes(request):
             sub_category_id = sub_category["id"]
             sub_category_description = sub_category['description']
 
-            query = core_models.CPTCodeSubCategory.objects.filter(local_id=sub_category_id).first()
+            query = core_models.CPTCodeSubCategory.objects.filter(hdr_local_id=sub_category_id).first()
             last_category = core_models.CPTCodeCategory.objects.all().last()
 
             if query is None:
@@ -178,7 +178,7 @@ def import_cpt_codes(request):
                 code_local_id = code["code"]
                 code_description = code['description']
 
-                query = core_models.CPTCode.objects.filter(local_id=code_id).first()
+                query = core_models.CPTCode.objects.filter(hdr_local_id=code_id).first()
 
                 if query is None:
                     # # insert icd code
