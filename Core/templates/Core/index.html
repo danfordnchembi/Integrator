@@ -9,194 +9,224 @@
         <div class="col-md-12 col-sm-12">
             <div class="card">
                 <div class="card-header">
-                    <h4 class="card-title">Payload Administrations</h4>
+                    <h4 class="card-title"><u>FACILITY INFORMATION</u></h4>
+
+                    <div align="right" style="padding-right: 50px">
+                        <a type="button" class="la la-power-off la-3x text-danger" href="{% url "logout" %}" id="btn_logout">Logout</a>
+                    </div>
+
                 </div>
 
                 <div class="card-body">
+                    <h2>Facility Name: <u class="text-danger">{{ organisation_name }}</u></h2>
+                    <h2>Facility HFR Code: <u class="text-danger">{{ facility_hfr_code }}</u></h2>
+                    <a id="btn_tasks" href="#" type="button" class="btn btn-primary round width-200 buttonAnimation">
+                        <i class="la la-time"></i>Task Automation
+                    </a>
+                </div>
 
-                    <div >
-                        <div class="table-responsive">
-                            <div class="card">
-                                <h2>Facility Name: <u>{{ organisation_name }}</u></h2>
-                                <h2>Facility HFR Code: <u>{{ facility_hfr_code }}</u></h2>
-                            </div>
+            </div>
+
+            <div class="card">
+
+                <div class="card-header">
+                    <h4 class="card-title"><u>PAYLOAD ADMINISTRATION</u></h4>
+                </div>
 
 
-                            <h2>Import Standards</h2>
+                <div class="card">
 
-                            <a id="import_icd10" href="#" type="button" class="btn btn-primary round width-200 buttonAnimation">
-                                <i class="la la-download"></i>Import ICD10 Codes
+                    <div class="card-body">
+
+                        <h2>Import Standards</h2>
+
+                        <a id="import_icd10" href="#" type="button" class="btn btn-primary round width-200 buttonAnimation">
+                            <i class="la la-download"></i>Import ICD10 Codes
+                        </a>
+
+                        <a id="import_cpt" href="#" type="button" class="btn btn-success round width-200 buttonAnimation">
+                            <i class="la la-download"></i>Import CPT Codes
+                        </a>
+
+                    </div>
+
+                    <div>
+                        <div class="card-body">
+
+                            <h2>Send Payloads to HIM</h2>
+
+                            <a id="services_received" href="#" type="button" class="btn btn-primary round width-200 buttonAnimation">
+                                <i class="la la-scissors"></i>Services Received
                             </a>
 
-                            <a id="import_cpt" href="#" type="button" class="btn btn-success round width-200 buttonAnimation">
-                                <i class="la la-download"></i>Import CPT Codes
+                            <a id="revenue_received" href="#" type="button" class="btn btn-warning round width-200 buttonAnimation">
+                                <i class="la la-money"></i>Revenue Received
                             </a>
 
-                            {#                        </div>#}
-                        </div> <br /> <br />
+                            <a id="bed_occupancy" href="#" type="button" class="btn btn-success round width-200 buttonAnimation">
+                                <i class="la la-bed"></i>Bed Occupancy
+                            </a>
 
-                        <div>
-                            <div class="table-responsive">
+                            <a id="ddcout" href="#" type="button" class="btn btn-info round width-200 buttonAnimation">
+                                <i class="la la-home"></i>Death Outside Facility
+                            </a>
 
-                                <h2>Send Payloads to HIM</h2>
-
-                                <a id="services_received" href="#" type="button" class="btn btn-primary round width-200 buttonAnimation">
-                                    <i class="la la-scissors"></i>Services Received
-                                </a>
-
-                                <a id="revenue_received" href="#" type="button" class="btn btn-warning round width-200 buttonAnimation">
-                                    <i class="la la-money"></i>Revenue Received
-                                </a>
-
-                                <a id="bed_occupancy" href="#" type="button" class="btn btn-success round width-200 buttonAnimation">
-                                    <i class="la la-bed"></i>Bed Occupancy
-                                </a>
-
-                                <a id="ddcout" href="#" type="button" class="btn btn-info round width-200 buttonAnimation">
-                                    <i class="la la-home"></i>Death Outside Facility
-                                </a>
-
-                                <a id="ddc" href="#" type="button" class="btn btn-danger round width-200 buttonAnimation">
-                                    <i class="la la-home"></i>Death in Facility
-                                </a>
-
-                            </div>
-
-                            <div class="loader-wrapper" id="filter_spinner">
-                                <div class="loader-container">
-                                    <div class="ball-beat loader-purple">
-                                        <div></div>
-                                        <div></div>
-                                        <div></div>
-                                    </div>
-                                </div>
-                            </div>
+                            <a id="ddc" href="#" type="button" class="btn btn-danger round width-200 buttonAnimation">
+                                <i class="la la-home"></i>Death in Facility
+                            </a>
 
                         </div>
 
-
-                            <div class="row">
-                                <div class="col-md-12 col-sm-12">
-                                    <div>
-                                        <div class="card-header">
-                                            <h4 class="card-title">CPT Codes Mappings</h4>
-                                        </div>
-
-                                        <div class="col-md-3">
-                                            <button type="button" class="btn btn-outline-primary block btn-md" data-toggle="modal" data-target="#default">
-                                                <i class="la la-plus"></i>New CPT Code Mapping
-                                            </button>
-
-                                        </div>
-
-                                        <div align="right" style="padding-right: 50px">
-                                            <a class="las la-file-excel la-3x" href="{% url 'download_cpt_codes_as_csv' %}" id="id_export_xls">Download</a>
-
-                                            <a class="las la-upload la-3x" data-toggle="modal" data-target="#import">Upload</a>
-
-                                        </div>
-
-                                        <div class="card-body">
-
-                                            <div class="table-responsive">
-
-                                                {% render_table cpt_code_mappings_table %}
-
-                                            </div>
-
-                                        </div>
-                                    </div>
-                            </div>
-
-                            <div class="col-lg-4 col-md-6 col-sm-12">
-                                <div class="form-group">
-                                    <!-- Modal -->
-                                    <div class="modal fade text-left" id="import" tabindex="-1" role="dialog" aria-labelledby="myModalLabel1" aria-hidden="true">
-                                        <div class="modal-dialog modal-sm" role="document">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h4 class="modal-title" id="myModalLabel1">Upload CPT Codes Mapping</h4>
-                                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                        <span aria-hidden="true">&times;</span>
-                                                    </button>
-                                                </div>
-                                                <div class="modal-body">
-
-                                                    <form method = "POST" action="{% url 'upload_cpt_codes' %}" enctype="multipart/form-data">
-
-                                                        {% csrf_token %}
-
-                                                        <table>
-
-                                                            {% crispy cpt_code_mapping_import_form %}
-
-
-                                                        </table>
-
-                                                        <div class="modal-footer">
-                                                            <button type="button" class="btn grey btn-outline-secondary" data-dismiss="modal">Close</button>
-                                                            <button type="submit" class="btn btn-outline-primary">Upload</button>
-                                                        </div>
-
-                                                    </form>
-
-                                                </div>
-
-                                            </div>
-                                        </div>
-                                    </div>
+                        <div class="loader-wrapper" id="filter_spinner">
+                            <div class="loader-container">
+                                <div class="ball-beat loader-purple">
+                                    <div></div>
+                                    <div></div>
+                                    <div></div>
                                 </div>
                             </div>
-
-                            <div class="col-lg-4 col-md-6 col-sm-12">
-                                <div class="form-group">
-                                    <!-- Modal -->
-                                    <div class="modal fade text-left" id="default" tabindex="-1" role="dialog" aria-labelledby="myModalLabel1" aria-hidden="true">
-                                        <div class="modal-dialog" role="document">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h4 class="modal-title" id="myModalLabel1">New CPT Code Mapping</h4>
-                                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                        <span aria-hidden="true">&times;</span>
-                                                    </button>
-                                                </div>
-                                                <div class="modal-body">
-
-
-                                                    <form id="form_cpt_codes_mapping" method = "POST" action="">
-
-                                                        {% csrf_token %}
-
-                                                        <table>
-
-                                                            {% crispy cpt_code_mapping_form %}
-
-
-                                                        </table>
-
-                                                        <div class="modal-footer">
-                                                            <button type="button" class="btn grey btn-outline-secondary" data-dismiss="modal">Close</button>
-                                                            <button type="submit" class="btn btn-outline-primary">Save</button>
-                                                        </div>
-
-                                                    </form>
-
-                                                </div>
-
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
                         </div>
 
                     </div>
-                </div>
-            </div>
-        </div>
 
+                </div>
+
+            </div>
+
+            <div class="card">
+
+                <div class="card-header">
+                    <h4 class="card-title"><u>CPT CODE MAPPING</u></h4>
+                </div>
+
+
+                <div class="card-body">
+                    <div class="col-md-12 col-sm-12">
+                        <div>
+
+                            {#                            <div class="col-md-3">#}
+                            {#                                <button type="button" class="btn btn-outline-primary block btn-md" data-toggle="modal" data-target="#default">#}
+                            {#                                    <i class="la la-plus"></i>New CPT Code Mapping#}
+                            {#                                </button>#}
+                            {##}
+                            {#                            </div>#}
+
+                            <div align="right" style="padding-right: 50px">
+                                <a class="las la-file-excel la-2x text-danger" href="{% url 'download_cpt_codes_as_csv' %}" id="id_export_xls"><u>Download</u></a>
+
+                                <a class="las la-upload la-2x" data-toggle="modal" data-target="#import">Upload</a>
+
+                            </div>
+
+                            <div id="table-list">
+
+                                <br />
+                                <label for="cpt_code">
+                                    Search CPT Codes:
+                                </label>
+                                <input type="text" id="search_cpt_codes" class="search form-control round border-primary mb-1 col-md-6" placeholder="Type to Search CPT codes..." />
+                            </div>
+
+                            <div class="card-body">
+
+                                <div class="table-responsive">
+
+                                    {% render_table cpt_code_mappings_table %}
+
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+                        <div class="form-group">
+                            <!-- Modal -->
+                            <div class="modal fade text-left" id="import" tabindex="-1" role="dialog" aria-labelledby="myModalLabel1" aria-hidden="true">
+                                <div class="modal-dialog modal-sm" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h4 class="modal-title" id="myModalLabel1">Upload CPT Codes Mapping</h4>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+
+                                            <form method = "POST" action="{% url 'upload_cpt_codes' %}" enctype="multipart/form-data">
+
+                                                {% csrf_token %}
+
+                                                <table>
+
+                                                    {% crispy cpt_code_mapping_import_form %}
+
+
+                                                </table>
+
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn grey btn-outline-secondary" data-dismiss="modal">Close</button>
+                                                    <button type="submit" id="btn_upload" class="btn btn-outline-primary">Upload</button>
+                                                </div>
+
+                                            </form>
+
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+                        <div class="form-group">
+                            <!-- Modal -->
+                            <div class="modal fade text-left" id="default" tabindex="-1" role="dialog" aria-labelledby="myModalLabel1" aria-hidden="true">
+                                <div class="modal-dialog" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h4 class="modal-title" id="myModalLabel1">New CPT Code Mapping</h4>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+
+
+                                            <form id="form_cpt_codes_mapping" method = "POST" action="{% url "save_new_cpt_code" %}">
+
+                                                {% csrf_token %}
+
+                                                <table>
+
+                                                    {% crispy cpt_code_mapping_form %}
+
+
+                                                </table>
+
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn grey btn-outline-secondary" data-dismiss="modal">Close</button>
+                                                    <button type="submit" class="btn btn-outline-primary">Save</button>
+                                                </div>
+
+                                            </form>
+
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
     </div>
+
 
 {% endblock %}
 
@@ -348,7 +378,7 @@
                                 error: function (XMLHttpRequest, textStatus, errorThrown) {
 
                                     $("#filter_spinner").hide();
-                                    swal("Error!", "Upload to HDR failed.", "error");
+                                    swal("Upload Failed.", "Error thrown: "+errorThrown+" ", "error");
 
                                 }
                             });
@@ -400,7 +430,7 @@
                                 error: function (XMLHttpRequest, textStatus, errorThrown) {
 
                                     $("#filter_spinner").hide();
-                                    swal("Error!", "Upload failed.", "error");
+                                    swal("Upload Failed.", "Error thrown: "+errorThrown+" ", "error");
 
                                 }
                             });
@@ -453,7 +483,7 @@
 
 
                                     $("#filter_spinner").hide();
-                                    swal("Error!", "Upload failed.", "error");
+                                    swal("Upload Failed.", "Error thrown: "+errorThrown+" ", "error");
 
                                 }
                             });
@@ -505,7 +535,7 @@
                                 error: function (XMLHttpRequest, textStatus, errorThrown) {
 
                                     $("#filter_spinner").hide();
-                                    swal("Error!", "Upload failed.", "error");
+                                    swal("Upload Failed.", "Error thrown: "+errorThrown+" ", "error");
 
                                 }
                             });
@@ -559,7 +589,7 @@
 
 
                                     $("#filter_spinner").hide();
-                                    swal("Error!", "Upload failed.", "error");
+                                    swal("Upload Failed.", "Error thrown: "+errorThrown+" ", "error");
 
                                 }
                             });
@@ -577,6 +607,37 @@
                 });
 
                 e.preventDefault(); // avoid to execute the actual submit of the form.
+
+            });
+
+            $("#search_cpt_codes").keyup(function () {
+
+                var value = $(this).val();
+
+                $.each($(".table tbody").find("tr"), function () {
+
+                    if ($(this).text().toLowerCase().replace(/\s+/g, '').indexOf(value.replace(/\s+/g, '').toLowerCase()) == -1)
+                        $(this).hide();
+                    else
+                        $(this).show();
+                });
+
+            });
+
+            $('.btn_update').on("click", function () {
+
+                var id = $(this).attr('id');
+
+                $("#popModal").load('{% url 'update_cpt_code' 123 %}'.replace('123',id), function() {
+                    $("#popModal").modal("show");
+                });
+
+            });
+
+            $('#btn_tasks').on("click", function () {
+
+                window.open('/admin' , '_blank');
+                location.reload();
 
             });
 

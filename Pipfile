@@ -13,6 +13,7 @@ ibm-db = "*"
 mysqlclient = "*"
 pyodbc = "*"
 django-tables2 = "*"
+xlwt = "*"
 
 [dev-packages]
 

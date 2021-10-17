@@ -88,17 +88,8 @@ class CPTCode(models.Model):
     sub_category = models.ForeignKey(CPTCodeSubCategory,related_name='code', on_delete=models.DO_NOTHING, null=True, blank=True)
     code = models.CharField(max_length=255)
     description = models.CharField(max_length=255)
+    local_code = models.CharField(max_length=255, default=0)
 
     class Meta:
         db_table = "CPTCodes"
         verbose_name = "CPT Code"
-
-class CPTCodesMapping(models.Model):
-    def __str__(self):
-        return '%d' % self.id
-
-    cpt_code = models.ForeignKey(CPTCode, on_delete=models.DO_NOTHING, null=True, blank=True)
-    local_code = models.CharField(max_length=255)
-
-    class Meta:
-        db_table = "CPTCodesMappings"

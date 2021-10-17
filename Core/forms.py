@@ -11,5 +11,5 @@ class CPTCodeMappingImportForm(forms.Form):
 class CPTCodesMappingForm(forms.ModelForm):
 
     class Meta:
-        model = core_models.CPTCodesMapping
-        fields = ('cpt_code', 'local_code')
+        model = core_models.CPTCode
+        fields = '__all__'

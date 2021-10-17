@@ -11,7 +11,9 @@ from Core import forms as core_forms
 from Core import tables as core_tables
 from django.core.files.storage import FileSystemStorage
 from django_tables2 import RequestConfig
+from celery import Celery
 
+app = Celery()
 
 him_services_received_url = config('HIM_SERVICES_RECEIVED_URL')
 him_bed_occupancy_url = config('HIM_BED_OCCUPANCY_URL')
@@ -28,18 +30,19 @@ facility_hfr_code = config('FACILITY_HFR_CODE')
 
 # Create your views here.
 def get_index_page(request):
-    cpt_code_mappings = core_models.CPTCodesMapping.objects.all()
-    cpt_code_mappings_table = core_tables.CPTCodeMappingTable(cpt_code_mappings)
+    cpt_code = core_models.CPTCode.objects.all()
+    cpt_code_mappings_table = core_tables.CPTCodeMappingTable(cpt_code)
     cpt_code_mapping_import_form = core_forms.CPTCodeMappingImportForm()
     cpt_code_mapping_form = core_forms.CPTCodesMappingForm()
-    RequestConfig(request, paginate={"per_page": 10}).configure(cpt_code_mappings_table)
-    return render(request, 'Core/index.html', {"organisation_name": org_name, "facility_hfr_code":facility_hfr_code,
-                                               "cpt_code_mappings_table": cpt_code_mappings_table,
-                                               "cpt_code_mapping_import_form":cpt_code_mapping_import_form,
-                                               "cpt_code_mapping_form":cpt_code_mapping_form
-                                               })
+    RequestConfig(request, paginate={"per_page": 50}).configure(cpt_code_mappings_table)
 
+    return render(request,'Core/index.html', {"organisation_name": org_name, "facility_hfr_code":facility_hfr_code,
+                                              "cpt_code_mappings_table": cpt_code_mappings_table,
+                                              "cpt_code_mapping_import_form":cpt_code_mapping_import_form,
+                                              "cpt_code_mapping_form":cpt_code_mapping_form
+                                              })
 
+@app.task
 def import_icd_10_codes(request):
     icd10_url = "https://him-dev.moh.go.tz:5000/get-all-icd10-codes"
     icd10_payload = requests.get(icd10_url)
@@ -131,14 +134,17 @@ def import_icd_10_codes(request):
 
     return HttpResponse("ICD10 codes uploaded to your system")
 
-
+@app.task
 def import_cpt_codes(request):
     cpt_url = "https://him-dev.moh.go.tz:5000/get-all-cpt-codes"
     cpt_payload = requests.get(cpt_url)
     data = json.loads(cpt_payload.content)
 
+    print(data)
+
     for x in data:
         # # insert category
+        print(x["id"])
         query = core_models.CPTCodeCategory.objects.filter(hdr_local_id=x["id"]).first()
 
         if query is None:
@@ -179,11 +185,12 @@ def import_cpt_codes(request):
                 code_description = code['description']
 
                 query = core_models.CPTCode.objects.filter(hdr_local_id=code_id).first()
+                last_sub_category = core_models.CPTCodeSubCategory.objects.all().last()
 
                 if query is None:
                     # # insert icd code
                     instance_cpt_code = core_models.CPTCode()
-                    instance_cpt_code.sub_category_id = instance_sub_category.id
+                    instance_cpt_code.sub_category_id = last_sub_category.id
                     instance_cpt_code.hdr_local_id = code_id
                     instance_cpt_code.code = code_local_id
                     instance_cpt_code.description = code_description
@@ -195,7 +202,7 @@ def import_cpt_codes(request):
 
     return HttpResponse("CPT codes uploaded to your system")
 
-
+@app.task
 def send_services_received_payload(request):
     if config("EMR_NAME") == "Jeeva":
         conn = pyodbc.connect('DSN=JEEVADB;UID=JEEVADB;PASSWORD=SVRJEEVAJV')
@@ -234,8 +241,8 @@ def send_services_received_payload(request):
         visit_type = formatted_tuple[9]
 
         service_received_object = {"deptName": dept_name, "deptId": dept_id, "patId": patient_id,
-                                "gender": gender, "dob": dob, "medSvcCode":med_svc_code, "icd10Code": icd_10_code,
-                                "serviceDate":service_date,"serviceProviderRankingId": service_provider_ranking_id, "visitType":visit_type}
+                                   "gender": gender, "dob": dob, "medSvcCode":med_svc_code, "icd10Code": icd_10_code,
+                                   "serviceDate":service_date,"serviceProviderRankingId": service_provider_ranking_id, "visitType":visit_type}
 
         service_received_items.append(service_received_object)
 
@@ -256,9 +263,9 @@ def send_services_received_payload(request):
     elif response.status_code == 401:
         return HttpResponse("Unauthorized access")
     else:
-        return HttpResponse("failed")
+        return HttpResponse("General Failed")
 
-
+@app.task
 def send_bed_occupancy_payload(request):
     if config("EMR_NAME") == "Jeeva":
         conn = pyodbc.connect('DSN=JEEVADB;UID=JEEVADB;PASSWORD=SVRJEEVAJV')
@@ -318,7 +325,7 @@ def send_bed_occupancy_payload(request):
     else:
         return HttpResponse("failed")
 
-
+@app.task
 def send_revenue_received_payload(request):
     if config("EMR_NAME") == "Jeeva":
         conn = pyodbc.connect('DSN=JEEVADB;UID=JEEVADB;PASSWORD=SVRJEEVAJV')
@@ -383,7 +390,7 @@ def send_revenue_received_payload(request):
     else:
         return HttpResponse("failed")
 
-
+@app.task
 def send_death_by_disease_in_facility_payload(request):
     if config("EMR_NAME") == "Jeeva":
         conn = pyodbc.connect('DSN=JEEVADB;UID=JEEVADB;PASSWORD=SVRJEEVAJV')
@@ -423,9 +430,9 @@ def send_death_by_disease_in_facility_payload(request):
 
 
         death_in_facility_object = {"wardId": ward_id, "wardName": ward_name,
-                                   "patId": patient_id,"firstName":first_name, "middleName":middle_name,
+                                    "patId": patient_id,"firstName":first_name, "middleName":middle_name,
                                     "lastName":last_name,
-                                   "icd10Code": icd_10_code, "gender": gender, "dob": dob,
+                                    "icd10Code": icd_10_code, "gender": gender, "dob": dob,
                                     "dateDeathOccurred": date_death_occured}
 
         death_in_facility_items.append(death_in_facility_object)
@@ -449,7 +456,7 @@ def send_death_by_disease_in_facility_payload(request):
     else:
         return HttpResponse("failed")
 
-
+@app.task
 def send_death_by_disease_outside_facility_payload(request):
     if config("EMR_NAME") == "Jeeva":
         conn = pyodbc.connect('DSN=JEEVADB;UID=JEEVADB;PASSWORD=SVRJEEVAJV')
@@ -519,11 +526,9 @@ def download_cpt_codes_as_csv(request):
     # the csv writer
     writer = csv.writer(response)
     field_names = [field.name for field in opts.fields]
-    field_names.append('local_code')
+    # field_names.append('local_code')
     # Write a first row with header information
     writer.writerow(field_names)
-
-    field_names.remove('local_code')
 
     # Write data rows
     for obj in queryset:
@@ -545,34 +550,58 @@ def upload_cpt_codes(request):
                 fs = FileSystemStorage()
                 filename = fs.save(file.name, file)
                 file_path = fs.path(filename)
-                save_cpt_code_entries(file_path)
+                update_cpt_code_entries(file_path, fs, file)
         return redirect(request.META['HTTP_REFERER'])
 
 
-def save_cpt_code_entries(file_path):
-    # Delete all previous mappings
-
-    instance_previous_mappings = core_models.CPTCodesMapping.objects.all()
-    instance_previous_mappings.delete()
+def update_cpt_code_entries(file_path, fs, file):
 
     with open(file_path, 'r') as fp:
         lines = csv.reader(fp, delimiter=',')
 
         row = 0
         for line in lines:
-            print(line)
             if line is not None:
                 if row == 0:
                     headers = line
                     row = row + 1
                 else:
-                    print(line[3])
-                    print(line[5])
-                    instance_cpt_code_mappings = core_models.CPTCodesMapping()
-                    instance_cpt_code_mappings.cpt_code_id = line[3]
-                    instance_cpt_code_mappings.local_code = line[5]
-
-                    instance_cpt_code_mappings.save()
-
+                    instance = core_models.CPTCode.objects.get(id=line[0])
+                    instance.local_code = line[5]
+                    instance.save()
             row = row + 1
+    fs.delete(file.name)
     fp.close()
+
+
+def save_new_cpt_code(request):
+    if request.method == "POST":
+        cpt_codes_mapping_form = core_forms.CPTCodesMappingForm(request.POST)
+
+        if cpt_codes_mapping_form.is_valid():
+            cpt_codes_mapping_form.full_clean()
+            cpt_codes_mapping_form.save()
+            return redirect(request.META['HTTP_REFERER'])
+
+
+def update_cpt_code(request, item_pk):
+    instance_cpt_code = core_models.CPTCode.objects.get(id=item_pk)
+    form = core_forms.CPTCodesMappingForm(instance=instance_cpt_code)
+
+    if request.method == "POST":
+        if request.POST:
+            form_cpt_code = core_forms.CPTCodesMappingForm(request.POST, instance=instance_cpt_code)
+            if form_cpt_code.is_valid():
+                form_cpt_code.save()
+                return redirect(request.META['HTTP_REFERER'])
+            else:
+                pass
+    else:
+        header = "Update CPT code"
+        url = "update_cpt_code"
+
+        return render(request, 'Core/UpdateItem.html', {'form': form, 'header': header,
+                                                                       'item_pk': item_pk, "url": url
+                                                                       })
+
+    return redirect(request.META['HTTP_REFERER'])

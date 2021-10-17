@@ -9,9 +9,14 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django_tables2 import RequestConfig
 import xlwt
-from Core import forms as core_forms
+from Core import views as core_views
 import requests
+import json
+from decouple import config
+from django.contrib.auth.models import User
 
+
+hdr_authentication_url = config("HDR_AUTHENTICATION_URL")
 
 def get_login_page(request):
     return render(request, 'UserManagement/Auth/Login.html')
@@ -44,26 +49,35 @@ def logout_view(request):
         return redirect('%s?next=%s' % (settings.LOGIN_URL, request.path))
 
 
+
 def authenticate_user(request):
 
     username = request.POST['username']
     password = request.POST['password']
 
-    url = "https://hdradmin-dev.moh.go.tz/rest-auth/login"
+    url = hdr_authentication_url
 
-    response = requests.post()
+    login_object = {"username": username, "password":password}
+    login_json_object = json.dumps(login_object)
 
-    user = authenticate(request, username=username, password=password)
+    response = requests.post(url, data=login_json_object,headers={'User-Agent': 'XY', 'Content-type': 'application/json'} )
+    status = response.status_code
 
-
-    if user is not None and user.is_authenticated:
-        if user.is_active:
-           return render(request, 'Core/index.html')
-        else:
-            messages.success(request, 'User is not active')
-            return render(request, 'UserManagement/Auth/Login.html')
+    if status == 200:
+        # return core_views.get_index_page(request)
+        add_or_update_user(username, password)
+        return redirect('/index')
     else:
         messages.success(request, 'User name or Password is wrong')
         return render(request, 'UserManagement/Auth/Login.html')
+
+
+def add_or_update_user(username, password):
+    instance = User.objects.filter(username=username)
+    instance.delete()
+
+    user = User.objects.create_user(username=username,
+                                        password= password, is_staff=True, is_superuser=True)
+    user.save()
 
 
