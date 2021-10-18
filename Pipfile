@@ -11,9 +11,15 @@ requests = "*"
 django-crispy-forms = "*"
 ibm-db = "*"
 mysqlclient = "*"
+<<<<<<< HEAD
+=======
 pyodbc = "*"
+<<<<<<< HEAD
 django-tables2 = "*"
 xlwt = "*"
+=======
+>>>>>>> d233434c0407503bb75d4d9f40e772ba4e212621
+>>>>>>> 2b6b6de839c27d10569c7295dd4695c9eb4bd519
 
 [dev-packages]
 
