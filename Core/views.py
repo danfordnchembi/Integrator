@@ -11,9 +11,9 @@ from Core import forms as core_forms
 from Core import tables as core_tables
 from django.core.files.storage import FileSystemStorage
 from django_tables2 import RequestConfig
-from celery import Celery
+# from celery import Celery
 
-app = Celery()
+# app = Celery()
 
 him_services_received_url = config('HIM_SERVICES_RECEIVED_URL')
 him_bed_occupancy_url = config('HIM_BED_OCCUPANCY_URL')
@@ -42,7 +42,7 @@ def get_index_page(request):
                                               "cpt_code_mapping_form":cpt_code_mapping_form
                                               })
 
-@app.task
+# @app.task
 def import_icd_10_codes(request):
     icd10_url = "https://him-dev.moh.go.tz:5000/get-all-icd10-codes"
     icd10_payload = requests.get(icd10_url)
@@ -134,7 +134,7 @@ def import_icd_10_codes(request):
 
     return HttpResponse("ICD10 codes uploaded to your system")
 
-@app.task
+# @app.task
 def import_cpt_codes(request):
     cpt_url = "https://him-dev.moh.go.tz:5000/get-all-cpt-codes"
     cpt_payload = requests.get(cpt_url)
@@ -202,7 +202,7 @@ def import_cpt_codes(request):
 
     return HttpResponse("CPT codes uploaded to your system")
 
-@app.task
+# @app.task
 def send_services_received_payload(request):
     if config("EMR_NAME") == "Jeeva":
         conn = pyodbc.connect('DSN=JEEVADB;UID=JEEVADB;PASSWORD=SVRJEEVAJV')
@@ -265,7 +265,7 @@ def send_services_received_payload(request):
     else:
         return HttpResponse("General Failed")
 
-@app.task
+# @app.task
 def send_bed_occupancy_payload(request):
     if config("EMR_NAME") == "Jeeva":
         conn = pyodbc.connect('DSN=JEEVADB;UID=JEEVADB;PASSWORD=SVRJEEVAJV')
@@ -325,7 +325,7 @@ def send_bed_occupancy_payload(request):
     else:
         return HttpResponse("failed")
 
-@app.task
+# @app.task
 def send_revenue_received_payload(request):
     if config("EMR_NAME") == "Jeeva":
         conn = pyodbc.connect('DSN=JEEVADB;UID=JEEVADB;PASSWORD=SVRJEEVAJV')
@@ -390,7 +390,7 @@ def send_revenue_received_payload(request):
     else:
         return HttpResponse("failed")
 
-@app.task
+# @app.task
 def send_death_by_disease_in_facility_payload(request):
     if config("EMR_NAME") == "Jeeva":
         conn = pyodbc.connect('DSN=JEEVADB;UID=JEEVADB;PASSWORD=SVRJEEVAJV')
@@ -456,7 +456,7 @@ def send_death_by_disease_in_facility_payload(request):
     else:
         return HttpResponse("failed")
 
-@app.task
+# @app.task
 def send_death_by_disease_outside_facility_payload(request):
     if config("EMR_NAME") == "Jeeva":
         conn = pyodbc.connect('DSN=JEEVADB;UID=JEEVADB;PASSWORD=SVRJEEVAJV')
