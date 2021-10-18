@@ -6,7 +6,7 @@ class ICD10CodeCategory(models.Model):
     def __str__(self):
         return '%s' %self.description
 
-    local_id = models.IntegerField()
+    hdr_local_id = models.IntegerField()
     description = models.CharField(max_length=255)
 
     class Meta:
@@ -18,7 +18,7 @@ class ICD10CodeSubCategory(models.Model):
     def __str__(self):
         return '%s' % self.description
 
-    local_id = models.IntegerField()
+    hdr_local_id = models.IntegerField()
     category = models.ForeignKey(ICD10CodeCategory,related_name='sub_category', on_delete=models.DO_NOTHING, null=True, blank=True)
     description = models.CharField(max_length=255)
 
@@ -31,7 +31,7 @@ class ICD10Code(models.Model):
     def __str__(self):
         return '%s' %self.description
 
-    local_id = models.IntegerField()
+    hdr_local_id = models.IntegerField()
     sub_category = models.ForeignKey(ICD10CodeSubCategory,related_name='code', on_delete=models.DO_NOTHING, null=True, blank=True)
     code = models.CharField(max_length=255)
     description = models.CharField(max_length=255)
@@ -45,7 +45,7 @@ class ICD10SubCode(models.Model):
     def __str__(self):
         return '%d' %self.id
 
-    local_id = models.IntegerField()
+    hdr_local_id = models.IntegerField()
     code = models.ForeignKey(ICD10Code,related_name='sub_code',on_delete=models.DO_NOTHING, null=True, blank=True)
     sub_code = models.CharField(max_length=255)
     description = models.CharField(max_length=255)
@@ -59,7 +59,7 @@ class CPTCodeCategory(models.Model):
     def __str__(self):
         return '%d' %self.id
 
-    local_id = models.IntegerField()
+    hdr_local_id = models.IntegerField()
     description = models.CharField(max_length=255)
 
     class Meta:
@@ -71,7 +71,7 @@ class CPTCodeSubCategory(models.Model):
     def __str__(self):
         return '%d' % self.id
 
-    local_id = models.IntegerField()
+    hdr_local_id = models.IntegerField()
     category = models.ForeignKey(CPTCodeCategory, related_name='sub_category',on_delete=models.DO_NOTHING, null=True, blank=True)
     description = models.CharField(max_length=255)
 
@@ -84,21 +84,12 @@ class CPTCode(models.Model):
     def __str__(self):
         return '%d' %self.id
 
-    local_id = models.IntegerField()
+    hdr_local_id = models.IntegerField()
     sub_category = models.ForeignKey(CPTCodeSubCategory,related_name='code', on_delete=models.DO_NOTHING, null=True, blank=True)
     code = models.CharField(max_length=255)
     description = models.CharField(max_length=255)
+    local_code = models.CharField(max_length=255, default=0)
 
     class Meta:
         db_table = "CPTCodes"
         verbose_name = "CPT Code"
-
-class CPTCodesMapping(models.Model):
-    def __str__(self):
-        return '%d' % self.id
-
-    cpt_code = models.ForeignKey(CPTCode, on_delete=models.DO_NOTHING, null=True, blank=True)
-    local_code = models.CharField(max_length=255)
-
-    class Meta:
-        db_table = "CPTCodesMappings"

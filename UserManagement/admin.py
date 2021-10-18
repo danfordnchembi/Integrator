@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from .models import Profile
 
 
@@ -20,12 +20,13 @@ class CustomUserAdmin(UserAdmin):
             return list()
         return super(CustomUserAdmin, self).get_inline_instances(request, obj)
 
-admin.site.site_header = 'Health Data Repository'
+
+admin.site.site_header = 'Integrator Admin Panel'
 admin.site.site_url = None
-admin.site.site_title = 'Health Data Repository'
+admin.site.site_title = 'Integrator Admin Panel'
 admin.site.index_title = 'App Configurations'
 
-
 admin.site.unregister(User)
-admin.site.register(User, CustomUserAdmin)
+admin.site.unregister(Group)
+# admin.site.register(User, CustomUserAdmin)
 

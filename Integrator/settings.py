@@ -42,7 +42,11 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     'Core',
-    'UserManagement'
+    'UserManagement',
+    'crispy_forms',
+    'django_tables2',
+    'celery',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -56,6 +60,17 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'Integrator.urls'
+
+# Celery related settings
+CELERY_BROKER_URL = 'amqp://localhost:5672'
+# CELERY_RESULT_BACKEND = 'django-db'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers.DatabaseScheduler'
+CELERY_TIMEZONE = 'Africa/Dar_es_Salaam'
+CELERY_ENABLE_UTC = True
+
 
 TEMPLATES = [
     {
@@ -123,6 +138,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
+
+# LOGOUT_REDIRECT_URL = '/'
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/

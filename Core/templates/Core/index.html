@@ -1,4 +1,6 @@
 {% extends 'base_component.html' %}
+{% load crispy_forms_tags %}
+{% load render_table from django_tables2 %}
 {% load static %}
 
 {% block content %}
@@ -7,133 +9,640 @@
         <div class="col-md-12 col-sm-12">
             <div class="card">
                 <div class="card-header">
-                    <h4 class="card-title">Payload Administrations</h4>
-                </div>
+                    <h4 class="card-title"><u>FACILITY INFORMATION</u></h4>
 
-
-                <div class="row">
-
-                    <div class="col-md-2">
-
-                        <h4 class="mb-3 text-primary" align="center"><i><b></b></i></h4>
-
+                    <div align="right" style="padding-right: 50px">
+                        <a type="button" class="la la-power-off la-3x text-danger" href="{% url "logout" %}" id="btn_logout">Logout</a>
                     </div>
 
                 </div>
 
                 <div class="card-body">
+                    <h2>Facility Name: <u class="text-danger">{{ organisation_name }}</u></h2>
+                    <h2>Facility HFR Code: <u class="text-danger">{{ facility_hfr_code }}</u></h2>
+                    <a id="btn_tasks" href="#" type="button" class="btn btn-primary round width-200 buttonAnimation">
+                        <i class="la la-time"></i>Task Automation
+                    </a>
+                </div>
 
-                    <div id="transaction_lines_table">
-                        <div class="table-responsive">
-                            <div class="card">
-                                <h2>Facility Name: {{ organisation_name }}</h2>
-                                <h2>Facility HFR Code: {{ facility_hfr_code }}</h2>
-                            </div>
+            </div>
+
+            <div class="card">
+
+                <div class="card-header">
+                    <h4 class="card-title"><u>PAYLOAD ADMINISTRATION</u></h4>
+                </div>
 
 
-                            <h2>Import Standards</h2>
+                <div class="card">
 
-                            <a href="{% url 'import_icd10_codes' %}" type="button" class="btn btn-primary round width-200 buttonAnimation">
-                                <i class="la la-download"></i>Import ICD10 Codes
-                            </a>
+                    <div class="card-body">
 
-                            <a href="{% url 'import_cpt_codes' %}" type="button" class="btn btn-success round width-200 buttonAnimation">
-                                <i class="la la-download"></i>Import CPT Codes
-                            </a>
+                        <h2>Import Standards</h2>
 
-{#                        </div>#}
-                    </div> <br /> <br />
+                        <a id="import_icd10" href="#" type="button" class="btn btn-primary round width-200 buttonAnimation">
+                            <i class="la la-download"></i>Import ICD10 Codes
+                        </a>
 
-                    <div id="transaction_lines_table">
-                        <div class="table-responsive">
+                        <a id="import_cpt" href="#" type="button" class="btn btn-success round width-200 buttonAnimation">
+                            <i class="la la-download"></i>Import CPT Codes
+                        </a>
+
+                    </div>
+
+                    <div>
+                        <div class="card-body">
 
                             <h2>Send Payloads to HIM</h2>
 
-
-                            <a id="services_received" href="{% url 'send_services_received' %}" type="button" class="btn btn-primary round width-200 buttonAnimation">
+                            <a id="services_received" href="#" type="button" class="btn btn-primary round width-200 buttonAnimation">
                                 <i class="la la-scissors"></i>Services Received
                             </a>
 
-                            <a href="{% url 'send_revenue_received' %}" type="button" class="btn btn-warning round width-200 buttonAnimation">
+                            <a id="revenue_received" href="#" type="button" class="btn btn-warning round width-200 buttonAnimation">
                                 <i class="la la-money"></i>Revenue Received
                             </a>
 
-                            <a href="{% url 'send_bed_occupancy' %}" type="button" class="btn btn-success round width-200 buttonAnimation">
+                            <a id="bed_occupancy" href="#" type="button" class="btn btn-success round width-200 buttonAnimation">
                                 <i class="la la-bed"></i>Bed Occupancy
                             </a>
 
-                            <a href="{% url 'send_death_outside_facility' %}" type="button" class="btn btn-info round width-200 buttonAnimation">
+                            <a id="ddcout" href="#" type="button" class="btn btn-info round width-200 buttonAnimation">
                                 <i class="la la-home"></i>Death Outside Facility
                             </a>
 
-                            <a href="{% url 'send_death_in_facility' %}" type="button" class="btn btn-danger round width-200 buttonAnimation">
+                            <a id="ddc" href="#" type="button" class="btn btn-danger round width-200 buttonAnimation">
                                 <i class="la la-home"></i>Death in Facility
                             </a>
 
                         </div>
 
+                        <div class="loader-wrapper" id="filter_spinner">
+                            <div class="loader-container">
+                                <div class="ball-beat loader-purple">
+                                    <div></div>
+                                    <div></div>
+                                    <div></div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
 
                 </div>
+
             </div>
+
+            <div class="card">
+
+                <div class="card-header">
+                    <h4 class="card-title"><u>CPT CODE MAPPING</u></h4>
+                </div>
+
+
+                <div class="card-body">
+                    <div class="col-md-12 col-sm-12">
+                        <div>
+
+                            {#                            <div class="col-md-3">#}
+                            {#                                <button type="button" class="btn btn-outline-primary block btn-md" data-toggle="modal" data-target="#default">#}
+                            {#                                    <i class="la la-plus"></i>New CPT Code Mapping#}
+                            {#                                </button>#}
+                            {##}
+                            {#                            </div>#}
+
+                            <div align="right" style="padding-right: 50px">
+                                <a class="las la-file-excel la-2x text-danger" href="{% url 'download_cpt_codes_as_csv' %}" id="id_export_xls"><u>Download</u></a>
+
+                                <a class="las la-upload la-2x" data-toggle="modal" data-target="#import">Upload</a>
+
+                            </div>
+
+                            <div id="table-list">
+
+                                <br />
+                                <label for="cpt_code">
+                                    Search CPT Codes:
+                                </label>
+                                <input type="text" id="search_cpt_codes" class="search form-control round border-primary mb-1 col-md-6" placeholder="Type to Search CPT codes..." />
+                            </div>
+
+                            <div class="card-body">
+
+                                <div class="table-responsive">
+
+                                    {% render_table cpt_code_mappings_table %}
+
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+                        <div class="form-group">
+                            <!-- Modal -->
+                            <div class="modal fade text-left" id="import" tabindex="-1" role="dialog" aria-labelledby="myModalLabel1" aria-hidden="true">
+                                <div class="modal-dialog modal-sm" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h4 class="modal-title" id="myModalLabel1">Upload CPT Codes Mapping</h4>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+
+                                            <form method = "POST" action="{% url 'upload_cpt_codes' %}" enctype="multipart/form-data">
+
+                                                {% csrf_token %}
+
+                                                <table>
+
+                                                    {% crispy cpt_code_mapping_import_form %}
+
+
+                                                </table>
+
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn grey btn-outline-secondary" data-dismiss="modal">Close</button>
+                                                    <button type="submit" id="btn_upload" class="btn btn-outline-primary">Upload</button>
+                                                </div>
+
+                                            </form>
+
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-4 col-md-6 col-sm-12">
+                        <div class="form-group">
+                            <!-- Modal -->
+                            <div class="modal fade text-left" id="default" tabindex="-1" role="dialog" aria-labelledby="myModalLabel1" aria-hidden="true">
+                                <div class="modal-dialog" role="document">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h4 class="modal-title" id="myModalLabel1">New CPT Code Mapping</h4>
+                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                <span aria-hidden="true">&times;</span>
+                                            </button>
+                                        </div>
+                                        <div class="modal-body">
+
+
+                                            <form id="form_cpt_codes_mapping" method = "POST" action="{% url "save_new_cpt_code" %}">
+
+                                                {% csrf_token %}
+
+                                                <table>
+
+                                                    {% crispy cpt_code_mapping_form %}
+
+
+                                                </table>
+
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn grey btn-outline-secondary" data-dismiss="modal">Close</button>
+                                                    <button type="submit" class="btn btn-outline-primary">Save</button>
+                                                </div>
+
+                                            </form>
+
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
         </div>
     </div>
-
 
 
 {% endblock %}
 
 
-<script src="{% static "app-assets/vendors/js/extensions/sweetalert.min.js" %}"></script>
-<script src="{% static "app-assets/js/scripts/extensions/sweet-alerts.js" %}"></script>
+{% block scripts %}
 
-<script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
 
-    $('#services_received').on("click", function(event)
-    {
+    <script>
 
-        var url = "{% url 'send_revenue_received' %}";
+        $(document).ready(function(){
 
+            $("#filter_spinner").hide();
 
-        swal({
-            title: "Are you sure you want to send services received?",
-            text: ".",
-            icon: "warning",
-            buttons: [
-                'No, cancel it!',
-                'Yes, I am sure!'
-            ],
-            dangerMode: true,
-        }).then(function(isConfirm) {
-            if (isConfirm) {
-                {
-                    $.ajax({
-                        type: "POST",
-                        url: url,
-                        success: function(data)
+            $('#import_icd10').on("click", function(event)
+            {
+                $("#filter_spinner").show();
+
+                var url = "{% url 'import_icd10_codes' %}";
+
+                swal({
+                    title: "Are you sure you want to import ICD10 codes into the integrator?",
+                    text: ".",
+                    icon: "warning",
+                    buttons: [
+                        'No, cancel it!',
+                        'Yes, I am sure!'
+                    ],
+                    dangerMode: true,
+                }).then(function(isConfirm) {
+                    if (isConfirm) {
                         {
-                            swal("Success!", "Services received uploaded successfully.", "success");
+                            $.ajax({
+                                type: "GET",
+                                url: url,
+                                data: {'csrfmiddlewaretoken': '{{ csrf_token }}'} ,
+                                success: function (data) {
 
-                        },
-                        error: function (XMLHttpRequest, textStatus, errorThrown) {
+                                    $("#filter_spinner").hide();
+                                    swal("Success!", "ICD10 codes imported successfully.", "success");
 
+                                },
+                                error: function (XMLHttpRequest, textStatus, errorThrown) {
 
+                                    $("#filter_spinner").hide();
+                                    swal("Error!", "ICD10 codes import failed.", "error");
 
-                            swal("Error!", "Deleting frequency failed!", "error");
+                                }
+                            });
 
+                            e.preventDefault(); // avoid to execute the actual submit of the form.
                         }
-                    });
+                    }
 
-                    e.preventDefault(); // avoid to execute the actual submit of the form.
+                    else {
+
+                        $("#filter_spinner").hide();
+                        swal("Info", "ICD10 import was cancelled by user.", "info");
+                    }
+
                 });
-    }
-    else {
-        swal("Cancelled", "Deleting cancelled :)", "error");
-    }
 
-    });
+                e.preventDefault(); // avoid to execute the actual submit of the form.
 
-    e.preventDefault(); // avoid to execute the actual submit of the form.
+            });
 
-    });
-</script>
+            $('#import_cpt').on("click", function(event)
+            {
+
+                $("#filter_spinner").show();
+                var url = "{% url 'import_cpt_codes' %}";
+
+                swal({
+                    title: "Are you sure you want to import CPT codes into the Integrator?",
+                    text: ".",
+                    icon: "warning",
+                    buttons: [
+                        'No, cancel it!',
+                        'Yes, I am sure!'
+                    ],
+                    dangerMode: true,
+                }).then(function(isConfirm) {
+                    if (isConfirm) {
+                        {
+                            $.ajax({
+                                type: "GET",
+                                url: url,
+                                data: {'csrfmiddlewaretoken': '{{ csrf_token }}'} ,
+                                success: function (data) {
+
+                                    $("#filter_spinner").hide();
+                                    swal("Success!", "CPT codes imported successfully.", "success");
+
+                                },
+                                error: function (XMLHttpRequest, textStatus, errorThrown) {
+
+                                    $("#filter_spinner").hide();
+
+                                    swal("Error!", "Upload to HDR failed.", "error");
+
+                                }
+                            });
+
+                            e.preventDefault(); // avoid to execute the actual submit of the form.
+                        }
+                    }
+
+                    else {
+
+                        $("#filter_spinner").hide();
+                        swal("Info", "CPT codes import was cancelled by user.", "info");
+                    }
+
+                });
+
+                e.preventDefault(); // avoid to execute the actual submit of the form.
+
+            });
+
+            $('#services_received').on("click", function(event)
+            {
+
+                $("#filter_spinner").show();
+                var url = "{% url 'send_services_received' %}";
+
+                swal({
+                    title: "Are you sure you want to send the Services Received payload to HDR?",
+                    text: ".",
+                    icon: "warning",
+                    buttons: [
+                        'No, cancel it!',
+                        'Yes, I am sure!'
+                    ],
+                    dangerMode: true,
+                }).then(function(isConfirm) {
+                    if (isConfirm) {
+                        {
+                            $.ajax({
+                                type: "POST",
+                                url: url,
+                                data: {'csrfmiddlewaretoken': '{{ csrf_token }}'} ,
+                                success: function (data) {
+
+                                    $("#filter_spinner").hide();
+                                    swal("Success!", "Services Received payload uploaded successfully.", "success");
+
+                                },
+                                error: function (XMLHttpRequest, textStatus, errorThrown) {
+
+                                    $("#filter_spinner").hide();
+                                    swal("Upload Failed.", "Error thrown: "+errorThrown+" ", "error");
+
+                                }
+                            });
+
+                            e.preventDefault(); // avoid to execute the actual submit of the form.
+                        }
+                    }
+
+                    else {
+
+                        $("#filter_spinner").hide();
+                        swal("Info", "Upload was cancelled by user.", "info");
+                    }
+
+                });
+
+                e.preventDefault(); // avoid to execute the actual submit of the form.
+
+            });
+
+            $('#revenue_received').on("click", function(event)
+            {
+                $("#filter_spinner").show();
+
+                var url = "{% url 'send_revenue_received' %}";
+
+                swal({
+                    title: "Are you sure you want to send the Revenue Received payload to HDR?",
+                    text: ".",
+                    icon: "warning",
+                    buttons: [
+                        'No, cancel it!',
+                        'Yes, I am sure!'
+                    ],
+                    dangerMode: true,
+                }).then(function(isConfirm) {
+                    if (isConfirm) {
+                        {
+                            $.ajax({
+                                type: "POST",
+                                url: url,
+                                data: {'csrfmiddlewaretoken': '{{ csrf_token }}'} ,
+                                success: function (data) {
+
+                                    $("#filter_spinner").hide();
+                                    swal("Success!", "Revenue Received payload uploaded successfully.", "success");
+
+                                },
+                                error: function (XMLHttpRequest, textStatus, errorThrown) {
+
+                                    $("#filter_spinner").hide();
+                                    swal("Upload Failed.", "Error thrown: "+errorThrown+" ", "error");
+
+                                }
+                            });
+
+                            e.preventDefault(); // avoid to execute the actual submit of the form.
+                        }
+                    }
+
+                    else {
+
+                        $("#filter_spinner").hide();
+                        swal("Info", "Upload was cancelled by user.", "info");
+                    }
+
+                });
+
+                e.preventDefault(); // avoid to execute the actual submit of the form.
+
+            });
+
+            $('#bed_occupancy').on("click", function(event)
+            {
+                $("#filter_spinner").show();
+
+                var url = "{% url 'send_bed_occupancy' %}";
+
+                swal({
+                    title: "Are you sure you want to send the Bed Occupancy payload to HDR?",
+                    text: ".",
+                    icon: "warning",
+                    buttons: [
+                        'No, cancel it!',
+                        'Yes, I am sure!'
+                    ],
+                    dangerMode: true,
+                }).then(function(isConfirm) {
+                    if (isConfirm) {
+                        {
+                            $.ajax({
+                                type: "POST",
+                                url: url,
+                                data: {'csrfmiddlewaretoken': '{{ csrf_token }}'} ,
+                                success: function (data) {
+
+                                    $("#filter_spinner").hide();
+                                    swal("Success!", "Bed occupancy uploaded successfully.", "success");
+
+                                },
+                                error: function (XMLHttpRequest, textStatus, errorThrown) {
+
+
+                                    $("#filter_spinner").hide();
+                                    swal("Upload Failed.", "Error thrown: "+errorThrown+" ", "error");
+
+                                }
+                            });
+
+                            e.preventDefault(); // avoid to execute the actual submit of the form.
+                        }
+                    }
+
+                    else {
+
+                        $("#filter_spinner").hide();
+                        swal("Info", "Upload was cancelled by user.", "info");
+                    }
+
+                });
+
+                e.preventDefault(); // avoid to execute the actual submit of the form.
+
+            });
+
+            $('#ddcout').on("click", function(event)
+            {
+
+                $("#filter_spinner").show();
+                var url = "{% url 'send_death_outside_facility' %}";
+
+                swal({
+                    title: "Are you sure you want to send the Death Outside the Facility payload to HDR?",
+                    text: ".",
+                    icon: "warning",
+                    buttons: [
+                        'No, cancel it!',
+                        'Yes, I am sure!'
+                    ],
+                    dangerMode: true,
+                }).then(function(isConfirm) {
+                    if (isConfirm) {
+                        {
+                            $.ajax({
+                                type: "POST",
+                                url: url,
+                                data: {'csrfmiddlewaretoken': '{{ csrf_token }}'} ,
+                                success: function (data) {
+
+                                    $("#filter_spinner").hide();
+                                    swal("Success!", "Death Outside the Facility payload uploaded successfully.", "success");
+
+                                },
+                                error: function (XMLHttpRequest, textStatus, errorThrown) {
+
+                                    $("#filter_spinner").hide();
+                                    swal("Upload Failed.", "Error thrown: "+errorThrown+" ", "error");
+
+                                }
+                            });
+
+                            e.preventDefault(); // avoid to execute the actual submit of the form.
+                        }
+                    }
+
+                    else {
+
+                        $("#filter_spinner").hide();
+                        swal("Info", "Upload was cancelled by user.", "info");
+                    }
+
+                });
+
+                e.preventDefault(); // avoid to execute the actual submit of the form.
+
+            });
+
+            $('#ddc').on("click", function(event)
+            {
+
+                $("#filter_spinner").show();
+
+                var url = "{% url 'send_death_in_facility' %}";
+
+                swal({
+                    title: "Are you sure you want to send the Death Within the Facility payload to HDR?",
+                    text: ".",
+                    icon: "warning",
+                    buttons: [
+                        'No, cancel it!',
+                        'Yes, I am sure!'
+                    ],
+                    dangerMode: true,
+                }).then(function(isConfirm) {
+                    if (isConfirm) {
+                        {
+                            $.ajax({
+                                type: "POST",
+                                url: url,
+                                data: {'csrfmiddlewaretoken': '{{ csrf_token }}'} ,
+                                success: function (data) {
+
+                                    $("#filter_spinner").hide();
+                                    swal("Success!", "Death within the facility payload uploaded successfully.", "success");
+
+                                },
+                                error: function (XMLHttpRequest, textStatus, errorThrown) {
+
+
+                                    $("#filter_spinner").hide();
+                                    swal("Upload Failed.", "Error thrown: "+errorThrown+" ", "error");
+
+                                }
+                            });
+
+                            e.preventDefault(); // avoid to execute the actual submit of the form.
+                        }
+                    }
+
+                    else {
+
+                        $("#filter_spinner").hide();
+                        swal("Info", "Upload was cancelled by user.", "info");
+                    }
+
+                });
+
+                e.preventDefault(); // avoid to execute the actual submit of the form.
+
+            });
+
+            $("#search_cpt_codes").keyup(function () {
+
+                var value = $(this).val();
+
+                $.each($(".table tbody").find("tr"), function () {
+
+                    if ($(this).text().toLowerCase().replace(/\s+/g, '').indexOf(value.replace(/\s+/g, '').toLowerCase()) == -1)
+                        $(this).hide();
+                    else
+                        $(this).show();
+                });
+
+            });
+
+            $('.btn_update').on("click", function () {
+
+                var id = $(this).attr('id');
+
+                $("#popModal").load('{% url 'update_cpt_code' 123 %}'.replace('123',id), function() {
+                    $("#popModal").modal("show");
+                });
+
+            });
+
+            $('#btn_tasks').on("click", function () {
+
+                window.open('/admin' , '_blank');
+                location.reload();
+
+            });
+
+        });
+
+    </script>
+
+{% endblock %}

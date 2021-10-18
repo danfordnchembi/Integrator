@@ -5,16 +5,17 @@ name = "pypi"
 
 [packages]
 django = "*"
+celery = "*"
+pymysql = "*"
 python-decouple = "*"
-psycopg2-binary = "*"
-requests = "*"
 django-crispy-forms = "*"
-ibm-db = "*"
-mysqlclient = "*"
-<<<<<<< HEAD
-=======
+django-tables2 = "*"
+pip = "*"
+install = "*"
+django-celery-beat = "*"
+requests = "*"
 pyodbc = "*"
->>>>>>> d233434c0407503bb75d4d9f40e772ba4e212621
+xlwt = "*"
 
 [dev-packages]
 
