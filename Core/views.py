@@ -21,6 +21,11 @@ him_revenue_received_url = config('HIM_REVENUE_RECEIVED_URL')
 him_death_by_disease_in_facility_url = config('HIM_DEATH_BY_DISEASE_IN_FACILITY_URL')
 him_death_by_disease_outside_facility_url = config('HIM_DEATH_BY_DISEASE_OUTSIDE_FACILITY_URL')
 
+source_username = config('SOURCE_DB_USER')
+source_password = config('SOURCE_DB_PASSWORD')
+source_dsn = config('SOURCE_DB_NAME')
+
+
 him_username = config('HIM_USERNAME')
 him_password = config('HIM_PASSWORD')
 
@@ -205,8 +210,8 @@ def import_cpt_codes(request):
 # @app.task
 def send_services_received_payload(request):
     if config("EMR_NAME") == "Jeeva":
-        conn = pyodbc.connect('DSN=JEEVADB;UID=JEEVADB;PASSWORD=SVRJEEVAJV')
-        cursor = conn.cursor()
+        dsn_conn = pyodbc.connect('DSN=' + source_dsn + ';UID=' + source_username + ';PASSWORD=' + source_password + '')
+        cursor = dsn_conn.cursor()
 
         cursor.execute('''''' + config('SERVICES_RECEIVED_PAYLOAD') + '''''')
 
@@ -268,8 +273,8 @@ def send_services_received_payload(request):
 # @app.task
 def send_bed_occupancy_payload(request):
     if config("EMR_NAME") == "Jeeva":
-        conn = pyodbc.connect('DSN=JEEVADB;UID=JEEVADB;PASSWORD=SVRJEEVAJV')
-        cursor = conn.cursor()
+        dsn_conn = pyodbc.connect('DSN=' + source_dsn + ';UID=' + source_username + ';PASSWORD=' + source_password + '')
+        cursor = dsn_conn.cursor()
 
         cursor.execute('''''' + config('BED_OCCUPANCY_PAYLOAD') + '''''')
 
@@ -328,7 +333,7 @@ def send_bed_occupancy_payload(request):
 # @app.task
 def send_revenue_received_payload(request):
     if config("EMR_NAME") == "Jeeva":
-        conn = pyodbc.connect('DSN=JEEVADB;UID=JEEVADB;PASSWORD=SVRJEEVAJV')
+        dsn_conn = pyodbc.connect('DSN=' + source_dsn + ';UID=' + source_username + ';PASSWORD=' + source_password + '')
         cursor = conn.cursor()
 
         cursor.execute('''''' + config('REVENUE_RECEIVED_PAYLOAD') + '''''')
@@ -393,8 +398,8 @@ def send_revenue_received_payload(request):
 # @app.task
 def send_death_by_disease_in_facility_payload(request):
     if config("EMR_NAME") == "Jeeva":
-        conn = pyodbc.connect('DSN=JEEVADB;UID=JEEVADB;PASSWORD=SVRJEEVAJV')
-        cursor = conn.cursor()
+        dsn_conn = pyodbc.connect('DSN=' + source_dsn + ';UID=' + source_username + ';PASSWORD=' + source_password + '')
+        cursor = dsn_conn.cursor()
 
         cursor.execute('''''' + config('DEATH_IN_FACILITY_PAYLOAD') + '''''')
 
@@ -459,8 +464,8 @@ def send_death_by_disease_in_facility_payload(request):
 # @app.task
 def send_death_by_disease_outside_facility_payload(request):
     if config("EMR_NAME") == "Jeeva":
-        conn = pyodbc.connect('DSN=JEEVADB;UID=JEEVADB;PASSWORD=SVRJEEVAJV')
-        cursor = conn.cursor()
+        dsn_conn = pyodbc.connect('DSN=' + source_dsn + ';UID=' + source_username + ';PASSWORD=' + source_password + '')
+        cursor = dsn_conn.cursor()
 
         cursor.execute('''''' + config('DEATH_OUTSIDE_FACILITY_PAYLOAD') + '''''')
 
