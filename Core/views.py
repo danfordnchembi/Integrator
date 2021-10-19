@@ -209,7 +209,7 @@ def import_cpt_codes(request):
 
 # @app.task
 def send_services_received_payload(request):
-    if config("EMR_NAME") == "Jeeva":
+    if config("EMR_NAME") == "Jeeva" or config("EMR_Name") == "MediPro":
         dsn_conn = pyodbc.connect('DSN=' + source_dsn + ';UID=' + source_username + ';PASSWORD=' + source_password + '')
         cursor = dsn_conn.cursor()
 
@@ -272,7 +272,7 @@ def send_services_received_payload(request):
 
 # @app.task
 def send_bed_occupancy_payload(request):
-    if config("EMR_NAME") == "Jeeva":
+    if config("EMR_NAME") == "Jeeva" or config("EMR_Name") == "MediPro":
         dsn_conn = pyodbc.connect('DSN=' + source_dsn + ';UID=' + source_username + ';PASSWORD=' + source_password + '')
         cursor = dsn_conn.cursor()
 
@@ -332,9 +332,9 @@ def send_bed_occupancy_payload(request):
 
 # @app.task
 def send_revenue_received_payload(request):
-    if config("EMR_NAME") == "Jeeva":
+    if config("EMR_NAME") == "Jeeva" or config("EMR_Name") == "MediPro":
         dsn_conn = pyodbc.connect('DSN=' + source_dsn + ';UID=' + source_username + ';PASSWORD=' + source_password + '')
-        cursor = conn.cursor()
+        cursor = dsn_conn.cursor()
 
         cursor.execute('''''' + config('REVENUE_RECEIVED_PAYLOAD') + '''''')
 
@@ -397,7 +397,7 @@ def send_revenue_received_payload(request):
 
 # @app.task
 def send_death_by_disease_in_facility_payload(request):
-    if config("EMR_NAME") == "Jeeva":
+    if config("EMR_NAME") == "Jeeva" or config("EMR_Name") == "MediPro":
         dsn_conn = pyodbc.connect('DSN=' + source_dsn + ';UID=' + source_username + ';PASSWORD=' + source_password + '')
         cursor = dsn_conn.cursor()
 
@@ -463,7 +463,7 @@ def send_death_by_disease_in_facility_payload(request):
 
 # @app.task
 def send_death_by_disease_outside_facility_payload(request):
-    if config("EMR_NAME") == "Jeeva":
+    if config("EMR_NAME") == "Jeeva" or config("EMR_Name") == "MediPro":
         dsn_conn = pyodbc.connect('DSN=' + source_dsn + ';UID=' + source_username + ';PASSWORD=' + source_password + '')
         cursor = dsn_conn.cursor()
 
