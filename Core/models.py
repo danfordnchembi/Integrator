@@ -93,3 +93,33 @@ class CPTCode(models.Model):
     class Meta:
         db_table = "CPTCodes"
         verbose_name = "CPT Code"
+
+
+class Query(models.Model):
+    def __str__(self):
+        return '%d' %self.id
+
+    ServicesReceived = 'SVCREC'
+    DeathByDiseaseCaseAtFacility = 'DDC'
+    DeathByDiseaseCaseNotAtFacility = 'DDCOUT'
+    RevenueReceived = 'REV'
+    BedOccupancy = 'BEDOCC'
+
+    MESSAGE_TYPE_CHOICES = (
+        (ServicesReceived, 'SVCREC'),
+        (DeathByDiseaseCaseAtFacility, 'DDC'),
+        (DeathByDiseaseCaseNotAtFacility, 'DDCOUT'),
+        (RevenueReceived, 'REV'),
+        (BedOccupancy, 'BEDOCC'),
+    )
+
+    message_type = models.CharField(max_length=100, choices=MESSAGE_TYPE_CHOICES)
+    sql_statement = models.TextField()
+    condition_field = models.CharField(max_length=255)
+    date_format = models.CharField(max_length=255, null=True, blank=True)
+
+    class Meta:
+        db_table = "Queries"
+        verbose_name_plural = "Queries"
+
+
