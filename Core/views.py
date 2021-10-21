@@ -305,11 +305,10 @@ def send_bed_occupancy_payload(request):
             date_format = query.date_format
 
             format_sql = sql.replace(";", "")
-            print("date is", convert_date_formats(date_from, date_format))
-            final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= " + "" + convert_date_formats(
-                date_from,
-                date_format) + "" + " AND " + "" + conditional_field + "" + " <= " + "" + convert_date_formats(date_to,
-                                                                                                               date_format) + ""
+
+            final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '"+ "" + convert_date_formats(
+                date_from,date_format) + "" + "' AND " + "" + conditional_field + "" + " <= '" + "" + convert_date_formats(date_from, date_format) + "" "'"
+
             print(final_sql_statement)
 
             if config("EMR_NAME") == "Jeeva" or config("EMR_NAME") == "MediPro":
