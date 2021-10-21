@@ -55,6 +55,22 @@
 
                             <h2>Send Payloads to HIM</h2>
 
+                            <div class="row">
+
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label for="issueinput3">Date From:</label>
+                                        <input type="date" id="id_date_from" class="form-control" name="datefrom" data-toggle="tooltip" data-trigger="hover" data-placement="top" data-title="Date From">
+                                    </div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="form-group">
+                                        <label for="issueinput4">Date To:</label>
+                                        <input type="date" id="id_date_to" class="form-control" name="dateto" data-toggle="tooltip" data-trigger="hover" data-placement="top" data-title="Date To">
+                                    </div>
+                                </div>
+                            </div>
+
                             <a id="services_received" href="#" type="button" class="btn btn-primary round width-200 buttonAnimation">
                                 <i class="la la-scissors"></i>Services Received
                             </a>
@@ -242,6 +258,26 @@
 
             $("#filter_spinner").hide();
 
+            var now = new Date();
+
+            {#        Date From#}
+            var day = ("0" + (now.getDate())).slice(-2);
+            var month = ("0" + (now.getMonth() + 1)).slice(-2);
+            var yesterday = now.getFullYear()+"-"+(month)+"-"+(day) ;
+
+            {#       Date To#}
+            var today = new Date();
+            var lastWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
+            var lastWeekMonth = lastWeek.getMonth() + 1;
+            var lastWeekDay = lastWeek.getDate();
+            var lastWeekYear = lastWeek.getFullYear();
+
+            var lastWeekDisplay = lastWeekYear + "-" + lastWeekMonth + "-" +lastWeekDay ;
+
+            $('#id_date_from').val(lastWeekDisplay);
+            $('#id_date_to').val(yesterday);
+
+
             $('#import_icd10').on("click", function(event)
             {
                 $("#filter_spinner").show();
@@ -353,6 +389,10 @@
                 $("#filter_spinner").show();
                 var url = "{% url 'send_services_received' %}";
 
+
+                var date_from = document.getElementById("id_date_from").value;
+                var date_to = document.getElementById("id_date_to").value;
+
                 swal({
                     title: "Are you sure you want to send the Services Received payload to HDR?",
                     text: ".",
@@ -368,7 +408,10 @@
                             $.ajax({
                                 type: "POST",
                                 url: url,
-                                data: {'csrfmiddlewaretoken': '{{ csrf_token }}'} ,
+                                data: {
+                                    date_from: date_from, date_to: date_to,
+                                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                                },
                                 success: function (data) {
 
                                     $("#filter_spinner").hide();
@@ -405,6 +448,9 @@
 
                 var url = "{% url 'send_revenue_received' %}";
 
+                var date_from = document.getElementById("id_date_from").value;
+                var date_to = document.getElementById("id_date_to").value;
+
                 swal({
                     title: "Are you sure you want to send the Revenue Received payload to HDR?",
                     text: ".",
@@ -420,7 +466,10 @@
                             $.ajax({
                                 type: "POST",
                                 url: url,
-                                data: {'csrfmiddlewaretoken': '{{ csrf_token }}'} ,
+                                data: {
+                                    date_from: date_from, date_to: date_to,
+                                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                                },
                                 success: function (data) {
 
                                     $("#filter_spinner").hide();
@@ -455,6 +504,9 @@
             {
                 $("#filter_spinner").show();
 
+                var date_from = document.getElementById("id_date_from").value;
+                var date_to = document.getElementById("id_date_to").value;
+
                 var url = "{% url 'send_bed_occupancy' %}";
 
                 swal({
@@ -472,7 +524,10 @@
                             $.ajax({
                                 type: "POST",
                                 url: url,
-                                data: {'csrfmiddlewaretoken': '{{ csrf_token }}'} ,
+                                data: {
+                                    date_from: date_from, date_to: date_to,
+                                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                                },
                                 success: function (data) {
 
                                     $("#filter_spinner").hide();
@@ -508,6 +563,9 @@
             {
 
                 $("#filter_spinner").show();
+                var date_from = document.getElementById("id_date_from").value;
+                var date_to = document.getElementById("id_date_to").value;
+
                 var url = "{% url 'send_death_outside_facility' %}";
 
                 swal({
@@ -525,7 +583,10 @@
                             $.ajax({
                                 type: "POST",
                                 url: url,
-                                data: {'csrfmiddlewaretoken': '{{ csrf_token }}'} ,
+                                data: {
+                                    date_from: date_from, date_to: date_to,
+                                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                                },
                                 success: function (data) {
 
                                     $("#filter_spinner").hide();
@@ -561,6 +622,9 @@
 
                 $("#filter_spinner").show();
 
+                var date_from = document.getElementById("id_date_from").value;
+                var date_to = document.getElementById("id_date_to").value;
+
                 var url = "{% url 'send_death_in_facility' %}";
 
                 swal({
@@ -578,7 +642,10 @@
                             $.ajax({
                                 type: "POST",
                                 url: url,
-                                data: {'csrfmiddlewaretoken': '{{ csrf_token }}'} ,
+                                data: {
+                                    date_from: date_from, date_to: date_to,
+                                    'csrfmiddlewaretoken': '{{ csrf_token }}'
+                                },
                                 success: function (data) {
 
                                     $("#filter_spinner").hide();
