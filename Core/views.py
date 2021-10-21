@@ -330,6 +330,8 @@ def send_bed_occupancy_payload(request):
 
             bed_occupancies = row
 
+            print(row)
+
             bed_occupancy_items = []
 
             for bed_occupancy in bed_occupancies:
