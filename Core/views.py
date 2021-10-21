@@ -228,7 +228,7 @@ def send_services_received_payload(request):
             print("date is",convert_date_formats(date_from, date_format))
             final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '" + "" + convert_date_formats(
                 date_from,date_format) + "" + "' AND " + "" + conditional_field + "" + " <= '" + "" + convert_date_formats(
-                date_from, date_format) + "" "'"
+                date_to, date_format) + "" "'"
             print(final_sql_statement)
 
             if config("EMR_NAME") == "Jeeva" or config("EMR_NAME") == "MediPro":
@@ -309,7 +309,7 @@ def send_bed_occupancy_payload(request):
             format_sql = sql.replace(";", "")
 
             final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '"+ "" + convert_date_formats(
-                date_from,date_format) + "" + "' AND " + "" + conditional_field + "" + " <= '" + "" + convert_date_formats(date_from, date_format) + "" "'"
+                date_from,date_format) + "" + "' AND " + "" + conditional_field + "" + " <= '" + "" + convert_date_formats(date_to, date_format) + "" "'"
 
             print(final_sql_statement)
 
@@ -388,7 +388,7 @@ def send_revenue_received_payload(request):
             final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '" + "" + convert_date_formats(
                 date_from,
                 date_format) + "" + "' AND " + "" + conditional_field + "" + " <= '" + "" + convert_date_formats(
-                date_from, date_format) + "" "'"
+                date_to, date_format) + "" "'"
             print(final_sql_statement)
 
             if config("EMR_NAME") == "Jeeva" or config("EMR_NAME") == "MediPro":
@@ -422,8 +422,8 @@ def send_revenue_received_payload(request):
                 med_svc_code = formatted_tuple[5]
                 payer_id = str(formatted_tuple[6])
                 exemption_category_id = str(formatted_tuple[7])
-                billed_amount = formatted_tuple[8]
-                waived_amount = formatted_tuple[9]
+                billed_amount = int(formatted_tuple[8])
+                waived_amount = int(formatted_tuple[9])
                 service_provider_ranking_id = str(formatted_tuple[10])
 
                 revenue_received_object = {"systemTransId": system_trans_id, "transactionDate": transaction_date, "patId": patient_id,
@@ -471,7 +471,7 @@ def send_death_by_disease_in_facility_payload(request):
             final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '" + "" + convert_date_formats(
                 date_from,
                 date_format) + "" + "' AND " + "" + conditional_field + "" + " <= '" + "" + convert_date_formats(
-                date_from, date_format) + "" "'"
+                date_to, date_format) + "" "'"
 
             print(final_sql_statement)
 
