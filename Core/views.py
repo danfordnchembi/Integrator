@@ -217,6 +217,8 @@ def send_services_received_payload(request):
 
         message_type = "SVCREC"
 
+        last_response = None
+
         queries = Query.objects.filter(message_type = message_type)
 
         for query in queries:
@@ -285,12 +287,14 @@ def send_services_received_payload(request):
             response = requests.post(him_services_received_url, auth=(him_username, him_password), data=json_payload,
                                      headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
 
-            if response.status_code == 200:
-                return HttpResponse("Service received data uploaded")
-            elif response.status_code == 401:
-                return HttpResponse("Unauthorized access")
-            else:
-                return HttpResponse("General Failed")
+            last_response = response
+
+        if last_response.status_code == 200:
+            return HttpResponse("Service received data uploaded")
+        elif last_response.status_code == 401:
+            return HttpResponse("Unauthorized access")
+        else:
+            return HttpResponse("General Failed")
 
 # @app.task
 def send_bed_occupancy_payload(request):
@@ -300,6 +304,7 @@ def send_bed_occupancy_payload(request):
 
         message_type = "BEDOCC"
         queries = Query.objects.filter(message_type=message_type)
+        last_response = None
 
         for query in queries:
             sql = query.sql_statement
@@ -360,14 +365,14 @@ def send_bed_occupancy_payload(request):
             response = requests.post(him_bed_occupancy_url, auth=(him_username, him_password), data=json_payload,
                                      headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
 
-            print(response.status_code)
+            last_response = response
 
-            if response.status_code == 200:
-                return HttpResponse("Bed Occupancy data uploaded")
-            elif response.status_code == 401:
-                return HttpResponse("Unauthorized access")
-            else:
-                return HttpResponse("failed")
+        if last_response.status_code == 200:
+            return HttpResponse("Bed Occupancy data uploaded")
+        elif last_response.status_code == 401:
+            return HttpResponse("Unauthorized access")
+        else:
+            return HttpResponse("failed")
 
 # @app.task
 def send_revenue_received_payload(request):
@@ -377,6 +382,8 @@ def send_revenue_received_payload(request):
 
         message_type = "REV"
         queries = Query.objects.filter(message_type=message_type)
+
+        last_response = None
 
         for query in queries:
             sql = query.sql_statement
@@ -445,12 +452,14 @@ def send_revenue_received_payload(request):
             response = requests.post(him_revenue_received_url, auth=(him_username, him_password), data=json_payload,
                                      headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
 
-            if response.status_code == 200:
-                return HttpResponse("Revenue received data uploaded")
-            elif response.status_code == 401:
-                return HttpResponse("Unauthorized access")
-            else:
-                return HttpResponse("failed")
+            last_response = response
+
+        if last_response.status_code == 200:
+            return HttpResponse("Revenue received data uploaded")
+        elif last_response.status_code == 401:
+            return HttpResponse("Unauthorized access")
+        else:
+            return HttpResponse("failed")
 
 # @app.task
 def send_death_by_disease_in_facility_payload(request):
@@ -460,6 +469,7 @@ def send_death_by_disease_in_facility_payload(request):
 
         message_type = "DDC"
         queries = Query.objects.filter(message_type=message_type)
+        last_response = None
 
         for query in queries:
             sql = query.sql_statement
@@ -535,12 +545,14 @@ def send_death_by_disease_in_facility_payload(request):
             response = requests.post(him_death_by_disease_in_facility_url, auth=(him_username, him_password), data=json_payload,
                                      headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
 
-            if response.status_code == 200:
-                return HttpResponse("Death in facility data uploaded")
-            elif response.status_code == 401:
-                return HttpResponse("Unauthorized access")
-            else:
-                return HttpResponse("failed")
+            last_response = response
+
+        if last_response.status_code == 200:
+            return HttpResponse("Death in facility data uploaded")
+        elif last_response.status_code == 401:
+            return HttpResponse("Unauthorized access")
+        else:
+            return HttpResponse("failed")
 
 # @app.task
 def send_death_by_disease_outside_facility_payload(request):
@@ -550,6 +562,7 @@ def send_death_by_disease_outside_facility_payload(request):
 
         message_type = "DDCOUT"
         queries = Query.objects.filter(message_type=message_type)
+        last_response = None
 
         for query in queries:
             sql = query.sql_statement
@@ -612,12 +625,14 @@ def send_death_by_disease_outside_facility_payload(request):
             response = requests.post(him_death_by_disease_outside_facility_url, auth=(him_username, him_password), data=json_payload,
                                      headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
 
-            if response.status_code == 200:
-                return HttpResponse("Death outside facility data uploaded")
-            elif response.status_code == 401:
-                return HttpResponse("Unauthorized access")
-            else:
-                return HttpResponse("Failed")
+            last_response = response
+
+        if last_response.status_code == 200:
+            return HttpResponse("Death outside facility data uploaded")
+        elif last_response.status_code == 401:
+            return HttpResponse("Unauthorized access")
+        else:
+            return HttpResponse("Failed")
 
 
 def download_cpt_codes_as_csv(request):
@@ -705,8 +720,8 @@ def update_cpt_code(request, item_pk):
         url = "update_cpt_code"
 
         return render(request, 'Core/UpdateItem.html', {'form': form, 'header': header,
-                                                                       'item_pk': item_pk, "url": url
-                                                                       })
+                                                        'item_pk': item_pk, "url": url
+                                                        })
 
     return redirect(request.META['HTTP_REFERER'])
 
