@@ -231,11 +231,13 @@ def send_services_received_payload(request):
 
             if config("EMR_NAME") == "Jeeva" or config("EMR_NAME") == "MediPro":
                 dsn_conn = pyodbc.connect('DSN=' + source_dsn + ';UID=' + source_username + ';PASSWORD=' + source_password + '')
+
                 cursor = dsn_conn.cursor()
 
                 cursor.execute('''''' + final_sql_statement + '''''')
 
                 row = cursor.fetchall()
+                print(row)
 
             else:
                 cursor = connection.cursor()
@@ -266,7 +268,7 @@ def send_services_received_payload(request):
                 service_received_object = {"deptName": dept_name, "deptId": dept_id, "patId": patient_id,
                                            "gender": gender, "dob": dob, "medSvcCode":med_svc_code, "icd10Code": icd_10_code,
                                            "serviceDate":service_date,"serviceProviderRankingId": service_provider_ranking_id, "visitType":visit_type}
-
+                print(service_received_object)
                 service_received_items.append(service_received_object)
 
             payload = {

@@ -15,7 +15,6 @@ django-celery-beat = "*"
 requests = "*"
 pyodbc = "*"
 xlwt = "*"
-celery = "==5.0.1"
 
 [dev-packages]
 
