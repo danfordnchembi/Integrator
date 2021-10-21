@@ -215,7 +215,9 @@ def send_services_received_payload(request):
         date_from = request.POST["date_from"]
         date_to = request.POST["date_to"]
 
-        queries = Query.objects.filter(message_type = "SVCREC")
+        message_type = "SVCREC"
+
+        queries = Query.objects.filter(message_type = message_type)
 
         for query in queries:
             sql = query.sql_statement
@@ -241,11 +243,9 @@ def send_services_received_payload(request):
                 with connections['data'].cursor() as cursor:
                     cursor.execute('''''' + final_sql_statement + '''''')
 
-            row = cursor.fetchall()
+                row = cursor.fetchall()
 
             services_received = row
-
-            message_type = "SVCREC"
 
             service_received_items = []
 
