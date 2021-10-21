@@ -501,7 +501,12 @@ def send_death_by_disease_in_facility_payload(request):
                 patient_id = str(formatted_tuple[2])
                 first_name = str(formatted_tuple[3])
                 middle_name = str(formatted_tuple[4])
-                last_name = str(formatted_tuple[5])
+
+                if str(formatted_tuple[5]) != "":
+                    last_name = str(formatted_tuple[5])
+                else:
+                    last_name = "-"
+
                 icd_10_code = str(formatted_tuple[6])
                 gender = formatted_tuple[7]
                 dob = str(formatted_tuple[8])
