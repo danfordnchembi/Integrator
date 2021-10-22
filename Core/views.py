@@ -264,47 +264,51 @@ def send_services_received_payload(request):
 
                 services_received = row
 
-                service_received_items = []
+                if services_received.count() > 0:
+                    service_received_items = []
 
-                for service_received in services_received:
-                    formatted_tuple = tuple(service_received)
+                    for service_received in services_received:
+                        formatted_tuple = tuple(service_received)
 
-                    dept_id = formatted_tuple[0]
-                    dept_name = formatted_tuple[1]
-                    patient_id = formatted_tuple[2]
-                    gender = formatted_tuple[3]
-                    dob = str(formatted_tuple[4])
-                    med_svc_code = formatted_tuple[5]
-                    icd_10_code = formatted_tuple[6]
-                    service_date = str(formatted_tuple[7])
-                    service_provider_ranking_id = str(formatted_tuple[8])
-                    visit_type = formatted_tuple[9]
+                        dept_id = formatted_tuple[0]
+                        dept_name = formatted_tuple[1]
+                        patient_id = formatted_tuple[2]
+                        gender = formatted_tuple[3]
+                        dob = str(formatted_tuple[4])
+                        med_svc_code = formatted_tuple[5]
+                        icd_10_code = formatted_tuple[6]
+                        service_date = str(formatted_tuple[7])
+                        service_provider_ranking_id = str(formatted_tuple[8])
+                        visit_type = formatted_tuple[9]
 
-                    service_received_object = {"deptName": dept_name, "deptId": dept_id, "patId": patient_id,
-                                               "gender": gender, "dob": dob, "medSvcCode":med_svc_code, "icd10Code": icd_10_code,
-                                               "serviceDate":service_date,"serviceProviderRankingId": service_provider_ranking_id, "visitType":visit_type}
-                    print(service_received_object)
-                    service_received_items.append(service_received_object)
+                        service_received_object = {"deptName": dept_name, "deptId": dept_id, "patId": patient_id,
+                                                   "gender": gender, "dob": dob, "medSvcCode": med_svc_code,
+                                                   "icd10Code": icd_10_code,
+                                                   "serviceDate": service_date,
+                                                   "serviceProviderRankingId": service_provider_ranking_id,
+                                                   "visitType": visit_type}
+                        print(service_received_object)
+                        service_received_items.append(service_received_object)
 
-                payload = {
-                    "messageType": message_type,
-                    "orgName": org_name,
-                    "facilityHfrCode": facility_hfr_code,
-                    "items": service_received_items
-                }
+                    payload = {
+                        "messageType": message_type,
+                        "orgName": org_name,
+                        "facilityHfrCode": facility_hfr_code,
+                        "items": service_received_items
+                    }
 
-                json_payload = json.dumps(payload)
+                    json_payload = json.dumps(payload)
 
-                response = requests.post(him_services_received_url, auth=(him_username, him_password), data=json_payload,
-                                         headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
+                    response = requests.post(him_services_received_url, auth=(him_username, him_password),
+                                             data=json_payload,
+                                             headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
 
-                last_response = response
+                    last_response = response
 
-                initial_chunk_size += chunk_size + 1
-                chunk_size += chunk_size
-
-                if final_sql_statement.count() > 0:
                     transaction_status = False
+
+                    initial_chunk_size += chunk_size + 1
+                    chunk_size += chunk_size
                 else:
                     transaction_status = True
 
