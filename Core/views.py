@@ -315,7 +315,7 @@ def send_services_received_payload(request):
                     service_received_items = []
                     print(service_received_items)
                     from_chunk_size += configured_chunk_size
-                    to_chunk_size += configured_chunk_size
+
                 else:
                     last_response_status_code = 200
                     transaction_status = True
