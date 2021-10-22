@@ -217,7 +217,7 @@ def send_services_received_payload(request):
 
         message_type = "SVCREC"
 
-        last_response = None
+        last_response_status_code = None
 
         queries = Query.objects.filter(message_type = message_type)
         payload_config = PayloadConfig.objects.filter(message_type = message_type).first()
@@ -303,18 +303,19 @@ def send_services_received_payload(request):
                                              data=json_payload,
                                              headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
 
-                    last_response = response
+                    last_response_status_code = response.status_code
 
                     transaction_status = False
 
                     initial_chunk_size += chunk_size + 1
                     chunk_size += chunk_size
                 else:
+                    last_response_status_code = 200
                     transaction_status = True
 
-        if last_response.status_code == 200:
+        if last_response_status_code.status_code == 200:
             return HttpResponse("Service received data uploaded")
-        elif last_response.status_code == 401:
+        elif last_response_status_code.status_code == 401:
             return HttpResponse("Unauthorized access")
         else:
             return HttpResponse("General Failed")
