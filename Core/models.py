@@ -123,3 +123,30 @@ class Query(models.Model):
         verbose_name_plural = "Queries"
 
 
+class PayloadConfig(models.Model):
+    def __str__(self):
+        return '%d' % self.id
+
+    ServicesReceived = 'SVCREC'
+    DeathByDiseaseCaseAtFacility = 'DDC'
+    DeathByDiseaseCaseNotAtFacility = 'DDCOUT'
+    RevenueReceived = 'REV'
+    BedOccupancy = 'BEDOCC'
+
+    MESSAGE_TYPE_CHOICES = (
+        (ServicesReceived, 'SVCREC'),
+        (DeathByDiseaseCaseAtFacility, 'DDC'),
+        (DeathByDiseaseCaseNotAtFacility, 'DDCOUT'),
+        (RevenueReceived, 'REV'),
+        (BedOccupancy, 'BEDOCC'),
+    )
+
+    message_type = models.CharField(max_length=100, choices=MESSAGE_TYPE_CHOICES)
+    chunk_size = models.IntegerField()
+
+    class Meta:
+        db_table = "PayloadConfig"
+        verbose_name_plural = "Payload Configs"
+
+
+
