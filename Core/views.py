@@ -264,7 +264,7 @@ def send_services_received_payload(request):
 
                 services_received = row
 
-                if services_received.count() > 0:
+                if len(list(services_received)) > 0:
                     service_received_items = []
 
                     for service_received in services_received:
