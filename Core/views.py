@@ -307,13 +307,13 @@ def send_services_received_payload(request):
 
                     transaction_status = False
 
-                    service_received_items.clear()
+                    service_received_items = []
                     initial_chunk_size += chunk_size + 1
                     chunk_size += chunk_size
                 else:
                     last_response_status_code = 200
                     transaction_status = True
-                    service_received_items.clear()
+                    service_received_items = []
 
         if last_response_status_code == 200:
             return HttpResponse("Service received data uploaded")
