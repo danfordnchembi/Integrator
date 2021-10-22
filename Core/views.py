@@ -288,7 +288,7 @@ def send_services_received_payload(request):
                                                    "serviceDate": service_date,
                                                    "serviceProviderRankingId": service_provider_ranking_id,
                                                    "visitType": visit_type}
-                        print(service_received_object)
+
                         service_received_items.append(service_received_object)
 
                     payload = {
