@@ -11,7 +11,7 @@ from Core import forms as core_forms
 from Core import tables as core_tables
 from django.core.files.storage import FileSystemStorage
 from django_tables2 import RequestConfig
-from .models import Query
+from .models import Query, PayloadConfig
 from datetime import datetime
 # from celery import Celery
 
@@ -220,74 +220,93 @@ def send_services_received_payload(request):
         last_response = None
 
         queries = Query.objects.filter(message_type = message_type)
+        payload_config = PayloadConfig.objects.filter(message_type = message_type).first()
+
+        chunk_size = payload_config.chunk_size
 
         for query in queries:
             sql = query.sql_statement
             conditional_field = query.condition_field
             date_format = query.date_format
 
+            transaction_status = False #Transaction is still pending
+
             format_sql = sql.replace(";", "")
-            print("date is",convert_date_formats(date_from, date_format))
-            final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '" + "" + convert_date_formats(
-                date_from,date_format) + "" + "' AND " + "" + conditional_field + "" + " <= '" + "" + convert_date_formats(
-                date_to, date_format) + "" "'"
-            print(final_sql_statement)
 
-            if config("EMR_NAME") == "Jeeva" or config("EMR_NAME") == "MediPro":
-                dsn_conn = pyodbc.connect('DSN=' + source_dsn + ';UID=' + source_username + ';PASSWORD=' + source_password + '')
+            initial_chunk_size = 0
 
-                cursor = dsn_conn.cursor()
+            while transaction_status is False:
+                sql_limit = str(initial_chunk_size) + "," + str(chunk_size)
 
-                cursor.execute('''''' + final_sql_statement + '''''')
+                final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '" + "" + convert_date_formats(
+                    date_from,date_format) + "" + "' AND " + "" + conditional_field + "" + " <= '" + "" + convert_date_formats(
+                    date_to, date_format) + "" "' LIMIT("+sql_limit+")"
 
-                row = cursor.fetchall()
-                print(row)
+                print(final_sql_statement)
 
-            else:
-                cursor = connection.cursor()
+                if config("EMR_NAME") == "Jeeva" or config("EMR_NAME") == "MediPro":
+                    dsn_conn = pyodbc.connect('DSN=' + source_dsn + ';UID=' + source_username + ';PASSWORD=' + source_password + '')
 
-                with connections['data'].cursor() as cursor:
+                    cursor = dsn_conn.cursor()
+
                     cursor.execute('''''' + final_sql_statement + '''''')
 
-                row = cursor.fetchall()
+                    row = cursor.fetchall()
+                    print(row)
 
-            services_received = row
+                else:
+                    cursor = connection.cursor()
 
-            service_received_items = []
+                    with connections['data'].cursor() as cursor:
+                        cursor.execute('''''' + final_sql_statement + '''''')
 
-            for service_received in services_received:
-                formatted_tuple = tuple(service_received)
+                    row = cursor.fetchall()
 
-                dept_id = formatted_tuple[0]
-                dept_name = formatted_tuple[1]
-                patient_id = formatted_tuple[2]
-                gender = formatted_tuple[3]
-                dob = str(formatted_tuple[4])
-                med_svc_code = formatted_tuple[5]
-                icd_10_code = formatted_tuple[6]
-                service_date = str(formatted_tuple[7])
-                service_provider_ranking_id = str(formatted_tuple[8])
-                visit_type = formatted_tuple[9]
+                services_received = row
 
-                service_received_object = {"deptName": dept_name, "deptId": dept_id, "patId": patient_id,
-                                           "gender": gender, "dob": dob, "medSvcCode":med_svc_code, "icd10Code": icd_10_code,
-                                           "serviceDate":service_date,"serviceProviderRankingId": service_provider_ranking_id, "visitType":visit_type}
-                print(service_received_object)
-                service_received_items.append(service_received_object)
+                service_received_items = []
 
-            payload = {
-                "messageType": message_type,
-                "orgName": org_name,
-                "facilityHfrCode": facility_hfr_code,
-                "items": service_received_items
-            }
+                for service_received in services_received:
+                    formatted_tuple = tuple(service_received)
 
-            json_payload = json.dumps(payload)
+                    dept_id = formatted_tuple[0]
+                    dept_name = formatted_tuple[1]
+                    patient_id = formatted_tuple[2]
+                    gender = formatted_tuple[3]
+                    dob = str(formatted_tuple[4])
+                    med_svc_code = formatted_tuple[5]
+                    icd_10_code = formatted_tuple[6]
+                    service_date = str(formatted_tuple[7])
+                    service_provider_ranking_id = str(formatted_tuple[8])
+                    visit_type = formatted_tuple[9]
 
-            response = requests.post(him_services_received_url, auth=(him_username, him_password), data=json_payload,
-                                     headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
+                    service_received_object = {"deptName": dept_name, "deptId": dept_id, "patId": patient_id,
+                                               "gender": gender, "dob": dob, "medSvcCode":med_svc_code, "icd10Code": icd_10_code,
+                                               "serviceDate":service_date,"serviceProviderRankingId": service_provider_ranking_id, "visitType":visit_type}
+                    print(service_received_object)
+                    service_received_items.append(service_received_object)
 
-            last_response = response
+                payload = {
+                    "messageType": message_type,
+                    "orgName": org_name,
+                    "facilityHfrCode": facility_hfr_code,
+                    "items": service_received_items
+                }
+
+                json_payload = json.dumps(payload)
+
+                response = requests.post(him_services_received_url, auth=(him_username, him_password), data=json_payload,
+                                         headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
+
+                last_response = response
+
+                initial_chunk_size += chunk_size
+                chunk_size += chunk_size
+
+                if final_sql_statement.count() > 0:
+                    transaction_status = False
+                else:
+                    transaction_status = True
 
         if last_response.status_code == 200:
             return HttpResponse("Service received data uploaded")
