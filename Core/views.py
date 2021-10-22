@@ -263,9 +263,9 @@ def send_services_received_payload(request):
                     row = cursor.fetchall()
 
                 services_received = row
+                service_received_items = []
 
                 if len(list(services_received)) > 0:
-                    service_received_items = []
 
                     for service_received in services_received:
                         formatted_tuple = tuple(service_received)
@@ -307,11 +307,13 @@ def send_services_received_payload(request):
 
                     transaction_status = False
 
+                    service_received_items.clear()
                     initial_chunk_size += chunk_size + 1
                     chunk_size += chunk_size
                 else:
                     last_response_status_code = 200
                     transaction_status = True
+                    service_received_items.clear()
 
         if last_response_status_code == 200:
             return HttpResponse("Service received data uploaded")
@@ -328,7 +330,11 @@ def send_bed_occupancy_payload(request):
 
         message_type = "BEDOCC"
         queries = Query.objects.filter(message_type=message_type)
-        last_response = None
+        payload_config = PayloadConfig.objects.filter(message_type=message_type).first()
+
+        chunk_size = payload_config.chunk_size
+
+        last_response_status_code = None
 
         for query in queries:
             sql = query.sql_statement
@@ -336,66 +342,83 @@ def send_bed_occupancy_payload(request):
             date_format = query.date_format
 
             format_sql = sql.replace(";", "")
+            transaction_status = False #Transaction is still pending
 
-            final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '"+ "" + convert_date_formats(
-                date_from,date_format) + "" + "' AND " + "" + conditional_field + "" + " <= '" + "" + convert_date_formats(date_to, date_format) + "" "'"
+            initial_chunk_size = 0
 
-            print(final_sql_statement)
+            while transaction_status is False:
+                sql_limit = str(initial_chunk_size) + "," + str(chunk_size)
 
-            if config("EMR_NAME") == "Jeeva" or config("EMR_NAME") == "MediPro":
-                dsn_conn = pyodbc.connect('DSN=' + source_dsn + ';UID=' + source_username + ';PASSWORD=' + source_password + '')
-                cursor = dsn_conn.cursor()
+                final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '"+ "" + convert_date_formats(
+                    date_from,date_format) + "" + "' AND " + "" + conditional_field + "" + " <= '" + "" + convert_date_formats(date_to, date_format) + "" "' LIMIT "+sql_limit+""
 
-                cursor.execute('''''' + final_sql_statement + '''''')
+                print(final_sql_statement)
 
-                row = cursor.fetchall()
+                if config("EMR_NAME") == "Jeeva" or config("EMR_NAME") == "MediPro":
+                    dsn_conn = pyodbc.connect('DSN=' + source_dsn + ';UID=' + source_username + ';PASSWORD=' + source_password + '')
+                    cursor = dsn_conn.cursor()
 
-            else:
-                cursor = connection.cursor()
-
-                with connections['data'].cursor() as cursor:
                     cursor.execute('''''' + final_sql_statement + '''''')
 
                     row = cursor.fetchall()
 
-            bed_occupancies = row
+                else:
+                    cursor = connection.cursor()
 
-            print(row)
+                    with connections['data'].cursor() as cursor:
+                        cursor.execute('''''' + final_sql_statement + '''''')
 
-            bed_occupancy_items = []
+                        row = cursor.fetchall()
 
-            for bed_occupancy in bed_occupancies:
-                formatted_tuple = tuple(bed_occupancy)
+                bed_occupancies = row
+                bed_occupancy_items = []
 
-                ward_id = formatted_tuple[0]
-                ward_name = formatted_tuple[1]
-                patient_id = formatted_tuple[2]
-                admission_date = str(formatted_tuple[3])
-                discharge_date = str(formatted_tuple[4])
+                print(row)
 
-                bed_occupancy_object = {"wardId": ward_id, "wardName": ward_name, "patId": patient_id,
-                                        "admissionDate": admission_date, "dischargeDate": discharge_date}
+                if len(list(bed_occupancies)) > 0:
 
-                bed_occupancy_items.append(bed_occupancy_object)
+                    for bed_occupancy in bed_occupancies:
+                        formatted_tuple = tuple(bed_occupancy)
+
+                        ward_id = formatted_tuple[0]
+                        ward_name = formatted_tuple[1]
+                        patient_id = formatted_tuple[2]
+                        admission_date = str(formatted_tuple[3])
+                        discharge_date = str(formatted_tuple[4])
+
+                        bed_occupancy_object = {"wardId": ward_id, "wardName": ward_name, "patId": patient_id,
+                                                "admissionDate": admission_date, "dischargeDate": discharge_date}
+
+                        bed_occupancy_items.append(bed_occupancy_object)
 
 
-            payload = {
-                "messageType": message_type,
-                "orgName": org_name,
-                "facilityHfrCode": facility_hfr_code,
-                "items": bed_occupancy_items
-            }
+                    payload = {
+                        "messageType": message_type,
+                        "orgName": org_name,
+                        "facilityHfrCode": facility_hfr_code,
+                        "items": bed_occupancy_items
+                    }
 
-            json_payload = json.dumps(payload)
+                    json_payload = json.dumps(payload)
 
-            response = requests.post(him_bed_occupancy_url, auth=(him_username, him_password), data=json_payload,
-                                     headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
+                    response = requests.post(him_bed_occupancy_url, auth=(him_username, him_password), data=json_payload,
+                                             headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
 
-            last_response = response
+                    last_response_status_code = response.status_code
 
-        if last_response.status_code == 200:
+                    transaction_status = False
+
+                    bed_occupancy_items.clear()
+                    initial_chunk_size += chunk_size + 1
+                    chunk_size += chunk_size
+                else:
+                    last_response_status_code = 200
+                    transaction_status = True
+                    bed_occupancy_items.clear()
+
+        if last_response_status_code == 200:
             return HttpResponse("Bed Occupancy data uploaded")
-        elif last_response.status_code == 401:
+        elif last_response_status_code == 401:
             return HttpResponse("Unauthorized access")
         else:
             return HttpResponse("failed")
@@ -408,8 +431,11 @@ def send_revenue_received_payload(request):
 
         message_type = "REV"
         queries = Query.objects.filter(message_type=message_type)
+        payload_config = PayloadConfig.objects.filter(message_type=message_type).first()
 
-        last_response = None
+        chunk_size = payload_config.chunk_size
+
+        last_response_status_code = None
 
         for query in queries:
             sql = query.sql_statement
@@ -417,72 +443,89 @@ def send_revenue_received_payload(request):
             date_format = query.date_format
 
             format_sql = sql.replace(";", "")
-            print("date is", convert_date_formats(date_from, date_format))
-            final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '" + "" + convert_date_formats(
-                date_from,
-                date_format) + "" + "' AND " + "" + conditional_field + "" + " <= '" + "" + convert_date_formats(
-                date_to, date_format) + "" "'"
-            print(final_sql_statement)
+            transaction_status = False  # Transaction is still pending
 
-            if config("EMR_NAME") == "Jeeva" or config("EMR_NAME") == "MediPro":
-                dsn_conn = pyodbc.connect('DSN=' + source_dsn + ';UID=' + source_username + ';PASSWORD=' + source_password + '')
-                cursor = dsn_conn.cursor()
+            initial_chunk_size = 0
 
-                cursor.execute('''''' + final_sql_statement + '''''')
+            while transaction_status is False:
+                sql_limit = str(initial_chunk_size) + "," + str(chunk_size)
 
-                row = cursor.fetchall()
+                final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '" + "" + convert_date_formats(
+                    date_from,
+                    date_format) + "" + "' AND " + "" + conditional_field + "" + " <= '" + "" + convert_date_formats(
+                    date_to, date_format) + "" "'  LIMIT "+sql_limit+""
+                print(final_sql_statement)
 
-            else:
-                cursor = connection.cursor()
+                if config("EMR_NAME") == "Jeeva" or config("EMR_NAME") == "MediPro":
+                    dsn_conn = pyodbc.connect('DSN=' + source_dsn + ';UID=' + source_username + ';PASSWORD=' + source_password + '')
+                    cursor = dsn_conn.cursor()
 
-                with connections['data'].cursor() as cursor:
                     cursor.execute('''''' + final_sql_statement + '''''')
 
                     row = cursor.fetchall()
 
-            revenue_received = row
+                else:
+                    cursor = connection.cursor()
 
-            revenue_received_items = []
+                    with connections['data'].cursor() as cursor:
+                        cursor.execute('''''' + final_sql_statement + '''''')
 
-            for revenue in revenue_received:
-                formatted_tuple = tuple(revenue)
+                        row = cursor.fetchall()
 
-                system_trans_id = str(formatted_tuple[0])
-                transaction_date = str(formatted_tuple[1])
-                patient_id = str(formatted_tuple[2])
-                gender = formatted_tuple[3]
-                dob = str(formatted_tuple[4])
-                med_svc_code = formatted_tuple[5]
-                payer_id = str(formatted_tuple[6])
-                exemption_category_id = str(formatted_tuple[7])
-                billed_amount = int(formatted_tuple[8])
-                waived_amount = int(formatted_tuple[9])
-                service_provider_ranking_id = str(formatted_tuple[10])
+                revenue_received = row
+                revenue_received_items = []
 
-                revenue_received_object = {"systemTransId": system_trans_id, "transactionDate": transaction_date, "patId": patient_id,
-                                           "gender": gender, "dob": dob, "medSvcCode": med_svc_code, "payerId": payer_id,
-                                           "exemptionCategoryId": exemption_category_id, "billedAmount": billed_amount,
-                                           "waivedAmount": waived_amount, "serviceProviderRankingId": service_provider_ranking_id}
+                if len(list(revenue_received)) > 0:
 
-                revenue_received_items.append(revenue_received_object)
+                    for revenue in revenue_received:
+                        formatted_tuple = tuple(revenue)
 
-            payload = {
-                "messageType": message_type,
-                "orgName": org_name,
-                "facilityHfrCode": facility_hfr_code,
-                "items": revenue_received_items
-            }
+                        system_trans_id = str(formatted_tuple[0])
+                        transaction_date = str(formatted_tuple[1])
+                        patient_id = str(formatted_tuple[2])
+                        gender = formatted_tuple[3]
+                        dob = str(formatted_tuple[4])
+                        med_svc_code = formatted_tuple[5]
+                        payer_id = str(formatted_tuple[6])
+                        exemption_category_id = str(formatted_tuple[7])
+                        billed_amount = int(formatted_tuple[8])
+                        waived_amount = int(formatted_tuple[9])
+                        service_provider_ranking_id = str(formatted_tuple[10])
 
-            json_payload = json.dumps(payload)
+                        revenue_received_object = {"systemTransId": system_trans_id, "transactionDate": transaction_date, "patId": patient_id,
+                                                   "gender": gender, "dob": dob, "medSvcCode": med_svc_code, "payerId": payer_id,
+                                                   "exemptionCategoryId": exemption_category_id, "billedAmount": billed_amount,
+                                                   "waivedAmount": waived_amount, "serviceProviderRankingId": service_provider_ranking_id}
 
-            response = requests.post(him_revenue_received_url, auth=(him_username, him_password), data=json_payload,
-                                     headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
+                        revenue_received_items.append(revenue_received_object)
 
-            last_response = response
+                    payload = {
+                        "messageType": message_type,
+                        "orgName": org_name,
+                        "facilityHfrCode": facility_hfr_code,
+                        "items": revenue_received_items
+                    }
 
-        if last_response.status_code == 200:
+                    json_payload = json.dumps(payload)
+
+                    response = requests.post(him_revenue_received_url, auth=(him_username, him_password), data=json_payload,
+                                             headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
+
+                    last_response_status_code = response.status_code
+
+                    transaction_status = False
+
+                    revenue_received_items.clear()
+                    initial_chunk_size += chunk_size + 1
+                    chunk_size += chunk_size
+                else:
+                    last_response_status_code = 200
+                    transaction_status = True
+                    revenue_received_items.clear()
+
+        if last_response_status_code == 200:
             return HttpResponse("Revenue received data uploaded")
-        elif last_response.status_code == 401:
+        elif last_response_status_code == 401:
             return HttpResponse("Unauthorized access")
         else:
             return HttpResponse("failed")
@@ -495,7 +538,11 @@ def send_death_by_disease_in_facility_payload(request):
 
         message_type = "DDC"
         queries = Query.objects.filter(message_type=message_type)
-        last_response = None
+        payload_config = PayloadConfig.objects.filter(message_type=message_type).first()
+
+        chunk_size = payload_config.chunk_size
+
+        last_response_status_code = None
 
         for query in queries:
             sql = query.sql_statement
@@ -503,79 +550,95 @@ def send_death_by_disease_in_facility_payload(request):
             date_format = query.date_format
 
             format_sql = sql.replace(";", "")
-            print("date is", convert_date_formats(date_from, date_format))
-            final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '" + "" + convert_date_formats(
-                date_from,
-                date_format) + "" + "' AND " + "" + conditional_field + "" + " <= '" + "" + convert_date_formats(
-                date_to, date_format) + "" "'"
+            transaction_status = False  # Transaction is still pending
 
-            print(final_sql_statement)
+            initial_chunk_size = 0
 
-            if config("EMR_NAME") == "Jeeva" or config("EMR_NAME") == "MediPro":
-                dsn_conn = pyodbc.connect('DSN=' + source_dsn + ';UID=' + source_username + ';PASSWORD=' + source_password + '')
-                cursor = dsn_conn.cursor()
+            while transaction_status is False:
+                sql_limit = str(initial_chunk_size) + "," + str(chunk_size)
 
-                cursor.execute('''''' + final_sql_statement + '''''')
+                final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '" + "" + convert_date_formats(
+                    date_from,
+                    date_format) + "" + "' AND " + "" + conditional_field + "" + " <= '" + "" + convert_date_formats(
+                    date_to, date_format) + "" "' LIMIT "+sql_limit+""
 
-                row = cursor.fetchall()
+                print(final_sql_statement)
 
-            else:
-                cursor = connection.cursor()
+                if config("EMR_NAME") == "Jeeva" or config("EMR_NAME") == "MediPro":
+                    dsn_conn = pyodbc.connect('DSN=' + source_dsn + ';UID=' + source_username + ';PASSWORD=' + source_password + '')
+                    cursor = dsn_conn.cursor()
 
-                with connections['data'].cursor() as cursor:
                     cursor.execute('''''' + final_sql_statement + '''''')
 
                     row = cursor.fetchall()
 
-            death_by_disease_in_facility = row
-
-            death_in_facility_items = []
-
-            for death in death_by_disease_in_facility:
-                formatted_tuple = tuple(death)
-
-                ward_id = str(formatted_tuple[0])
-                ward_name = str(formatted_tuple[1])
-                patient_id = str(formatted_tuple[2])
-                first_name = str(formatted_tuple[3])
-                middle_name = str(formatted_tuple[4])
-
-                if str(formatted_tuple[5]) != "":
-                    last_name = str(formatted_tuple[5])
                 else:
-                    last_name = "-"
+                    cursor = connection.cursor()
 
-                icd_10_code = str(formatted_tuple[6])
-                gender = formatted_tuple[7]
-                dob = str(formatted_tuple[8])
-                date_death_occured = formatted_tuple[9]
+                    with connections['data'].cursor() as cursor:
+                        cursor.execute('''''' + final_sql_statement + '''''')
+
+                        row = cursor.fetchall()
+
+                death_by_disease_in_facility = row
+                death_in_facility_items = []
+
+                if len(list(death_by_disease_in_facility)) > 0:
+
+                    for death in death_by_disease_in_facility:
+                        formatted_tuple = tuple(death)
+
+                        ward_id = str(formatted_tuple[0])
+                        ward_name = str(formatted_tuple[1])
+                        patient_id = str(formatted_tuple[2])
+                        first_name = str(formatted_tuple[3])
+                        middle_name = str(formatted_tuple[4])
+
+                        if str(formatted_tuple[5]) != "":
+                            last_name = str(formatted_tuple[5])
+                        else:
+                            last_name = "-"
+
+                        icd_10_code = str(formatted_tuple[6])
+                        gender = formatted_tuple[7]
+                        dob = str(formatted_tuple[8])
+                        date_death_occured = formatted_tuple[9]
 
 
-                death_in_facility_object = {"wardId": ward_id, "wardName": ward_name,
-                                            "patId": patient_id,"firstName":first_name, "middleName":middle_name,
-                                            "lastName":last_name,
-                                            "icd10Code": icd_10_code, "gender": gender, "dob": dob,
-                                            "dateDeathOccurred": date_death_occured}
+                        death_in_facility_object = {"wardId": ward_id, "wardName": ward_name,
+                                                    "patId": patient_id,"firstName":first_name, "middleName":middle_name,
+                                                    "lastName":last_name,
+                                                    "icd10Code": icd_10_code, "gender": gender, "dob": dob,
+                                                    "dateDeathOccurred": date_death_occured}
 
-                death_in_facility_items.append(death_in_facility_object)
+                        death_in_facility_items.append(death_in_facility_object)
 
-            payload = {
-                "messageType": message_type,
-                "orgName": org_name,
-                "facilityHfrCode": facility_hfr_code,
-                "items": death_in_facility_items
-            }
+                    payload = {
+                        "messageType": message_type,
+                        "orgName": org_name,
+                        "facilityHfrCode": facility_hfr_code,
+                        "items": death_in_facility_items
+                    }
 
-            json_payload = json.dumps(payload)
+                    json_payload = json.dumps(payload)
 
-            response = requests.post(him_death_by_disease_in_facility_url, auth=(him_username, him_password), data=json_payload,
-                                     headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
+                    response = requests.post(him_death_by_disease_in_facility_url, auth=(him_username, him_password), data=json_payload,
+                                             headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
 
-            last_response = response
+                    last_response_status_code = response.status_code
+                    transaction_status = False
 
-        if last_response.status_code == 200:
+                    death_in_facility_items.clear()
+                    initial_chunk_size += chunk_size + 1
+                    chunk_size += chunk_size
+                else:
+                    last_response_status_code = 200
+                    transaction_status = True
+                    death_in_facility_items.clear()
+
+        if last_response_status_code == 200:
             return HttpResponse("Death in facility data uploaded")
-        elif last_response.status_code == 401:
+        elif last_response_status_code == 401:
             return HttpResponse("Unauthorized access")
         else:
             return HttpResponse("failed")
@@ -588,7 +651,11 @@ def send_death_by_disease_outside_facility_payload(request):
 
         message_type = "DDCOUT"
         queries = Query.objects.filter(message_type=message_type)
-        last_response = None
+        payload_config = PayloadConfig.objects.filter(message_type=message_type).first()
+
+        chunk_size = payload_config.chunk_size
+
+        last_response_status_code = None
 
         for query in queries:
             sql = query.sql_statement
@@ -596,66 +663,80 @@ def send_death_by_disease_outside_facility_payload(request):
             date_format = query.date_format
 
             format_sql = sql.replace(";", "")
-            print("date is", convert_date_formats(date_from, date_format))
-            final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= " + "" + convert_date_formats(
-                date_from,
-                date_format) + "" + " AND " + "" + conditional_field + "" + " <= " + "" + convert_date_formats(date_to,
-                                                                                                               date_format) + ""
-            print(final_sql_statement)
+            transaction_status = False  # Transaction is still pending
 
-            if config("EMR_NAME") == "Jeeva" or config("EMR_NAME") == "MediPro":
-                dsn_conn = pyodbc.connect('DSN=' + source_dsn + ';UID=' + source_username + ';PASSWORD=' + source_password + '')
-                cursor = dsn_conn.cursor()
+            initial_chunk_size = 0
 
-                cursor.execute('''''' + final_sql_statement + '''''')
+            while transaction_status is False:
+                sql_limit = str(initial_chunk_size) + "," + str(chunk_size)
 
-                row = cursor.fetchall()
+                final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '" + "" + convert_date_formats(
+                    date_from,
+                    date_format) + "" + "' AND " + "" + conditional_field + "" + " <= '" + "" + convert_date_formats(
+                    date_to, date_format) + "" "' LIMIT " + sql_limit + ""
 
-            else:
-                cursor = connection.cursor()
+                print(final_sql_statement)
 
-                with connections['data'].cursor() as cursor:
+                if config("EMR_NAME") == "Jeeva" or config("EMR_NAME") == "MediPro":
+                    dsn_conn = pyodbc.connect('DSN=' + source_dsn + ';UID=' + source_username + ';PASSWORD=' + source_password + '')
+                    cursor = dsn_conn.cursor()
+
                     cursor.execute('''''' + final_sql_statement + '''''')
 
                     row = cursor.fetchall()
 
-            death_by_disease_outside_facility = row
+                else:
+                    cursor = connection.cursor()
 
-            death_outside_facility_items = []
+                    with connections['data'].cursor() as cursor:
+                        cursor.execute('''''' + final_sql_statement + '''''')
 
-            for death in death_by_disease_outside_facility:
-                formatted_tuple = tuple(death)
+                        row = cursor.fetchall()
 
-                death_id = str(formatted_tuple[0])
-                place_of_death_id = str(formatted_tuple[1])
-                icd_10_code = str(formatted_tuple[3])
-                gender = formatted_tuple[4]
-                dob = str(formatted_tuple[5])
-                date_death_occured = formatted_tuple[6]
+                death_by_disease_outside_facility = row
 
-                death_in_facility_object = {"deathId": death_id, "placeOfDeathId": place_of_death_id,
-                                            "icd10Code": icd_10_code,
-                                            "gender": gender, "dob": dob, "dateDeathOccurred": date_death_occured}
+                death_outside_facility_items = []
 
-                death_outside_facility_items.append(death_in_facility_object)
+                if len(list(death_by_disease_outside_facility)) > 0:
+                    for death in death_by_disease_outside_facility:
+                        formatted_tuple = tuple(death)
 
-            payload = {
-                "messageType": message_type,
-                "orgName": org_name,
-                "facilityHfrCode": facility_hfr_code,
-                "items": death_outside_facility_items
-            }
+                        death_id = str(formatted_tuple[0])
+                        place_of_death_id = str(formatted_tuple[1])
+                        icd_10_code = str(formatted_tuple[3])
+                        gender = formatted_tuple[4]
+                        dob = str(formatted_tuple[5])
+                        date_death_occured = formatted_tuple[6]
 
-            json_payload = json.dumps(payload)
+                        death_in_facility_object = {"deathId": death_id, "placeOfDeathId": place_of_death_id,
+                                                    "icd10Code": icd_10_code,
+                                                    "gender": gender, "dob": dob, "dateDeathOccurred": date_death_occured}
 
-            response = requests.post(him_death_by_disease_outside_facility_url, auth=(him_username, him_password), data=json_payload,
-                                     headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
+                        death_outside_facility_items.append(death_in_facility_object)
 
-            last_response = response
+                    payload = {
+                        "messageType": message_type,
+                        "orgName": org_name,
+                        "facilityHfrCode": facility_hfr_code,
+                        "items": death_outside_facility_items
+                    }
 
-        if last_response.status_code == 200:
+                    json_payload = json.dumps(payload)
+
+                    response = requests.post(him_death_by_disease_outside_facility_url, auth=(him_username, him_password), data=json_payload,
+                                             headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
+
+                    death_outside_facility_items.clear()
+                    initial_chunk_size += chunk_size + 1
+                    chunk_size += chunk_size
+                else:
+                    last_response_status_code = 200
+                    transaction_status = True
+                    death_outside_facility_items.clear()
+
+        if last_response_status_code == 200:
             return HttpResponse("Death outside facility data uploaded")
-        elif last_response.status_code == 401:
+        elif last_response_status_code == 401:
             return HttpResponse("Unauthorized access")
         else:
             return HttpResponse("Failed")
