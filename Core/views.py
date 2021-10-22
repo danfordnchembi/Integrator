@@ -300,7 +300,7 @@ def send_services_received_payload(request):
 
                 last_response = response
 
-                initial_chunk_size += chunk_size
+                initial_chunk_size += chunk_size + 1
                 chunk_size += chunk_size
 
                 if final_sql_statement.count() > 0:
