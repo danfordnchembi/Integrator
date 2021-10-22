@@ -254,7 +254,6 @@ def send_services_received_payload(request):
                     cursor.execute('''''' + final_sql_statement + '''''')
 
                     row = cursor.fetchall()
-                    print(row)
 
                 else:
                     cursor = connection.cursor()
