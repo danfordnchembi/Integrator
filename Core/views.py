@@ -238,6 +238,8 @@ def send_services_received_payload(request):
             while transaction_status is False:
                 sql_limit = str(initial_chunk_size) + "," + str(chunk_size)
 
+                print("limit is", sql_limit)
+
                 final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '" + "" + convert_date_formats(
                     date_from,date_format) + "" + "' AND " + "" + conditional_field + "" + " <= '" + "" + convert_date_formats(
                     date_to, date_format) + "" "' LIMIT "+sql_limit+""
