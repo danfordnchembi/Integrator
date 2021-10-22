@@ -222,7 +222,7 @@ def send_services_received_payload(request):
         queries = Query.objects.filter(message_type = message_type)
         payload_config = PayloadConfig.objects.filter(message_type = message_type).first()
 
-        chunk_size = payload_config.chunk_size
+        configured_chunk_size = payload_config.chunk_size
 
         for query in queries:
             sql = query.sql_statement
@@ -233,10 +233,14 @@ def send_services_received_payload(request):
 
             format_sql = sql.replace(";", "")
 
-            initial_chunk_size = 0
+            from_chunk_size = 0
+            to_chunk_size = 0
+
 
             while transaction_status is False:
-                sql_limit = str(initial_chunk_size) + "," + str(chunk_size)
+                to_chunk_size += configured_chunk_size
+
+                sql_limit = str(from_chunk_size) + "," + str(to_chunk_size)
 
                 print("limit is", sql_limit)
 
@@ -309,8 +313,9 @@ def send_services_received_payload(request):
                     transaction_status = False
 
                     service_received_items = []
-                    initial_chunk_size += chunk_size + 1
-                    chunk_size += chunk_size
+                    print(service_received_items)
+                    from_chunk_size += configured_chunk_size
+                    to_chunk_size += configured_chunk_size
                 else:
                     last_response_status_code = 200
                     transaction_status = True
