@@ -240,7 +240,7 @@ def send_services_received_payload(request):
 
                 final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '" + "" + convert_date_formats(
                     date_from,date_format) + "" + "' AND " + "" + conditional_field + "" + " <= '" + "" + convert_date_formats(
-                    date_to, date_format) + "" "' LIMIT("+sql_limit+")"
+                    date_to, date_format) + "" "' LIMIT "+sql_limit+""
 
                 print(final_sql_statement)
 
@@ -313,9 +313,9 @@ def send_services_received_payload(request):
                     last_response_status_code = 200
                     transaction_status = True
 
-        if last_response_status_code.status_code == 200:
+        if last_response_status_code == 200:
             return HttpResponse("Service received data uploaded")
-        elif last_response_status_code.status_code == 401:
+        elif last_response_status_code == 401:
             return HttpResponse("Unauthorized access")
         else:
             return HttpResponse("General Failed")
