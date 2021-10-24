@@ -234,13 +234,10 @@ def send_services_received_payload(request):
             format_sql = sql.replace(";", "")
 
             from_chunk_size = 0
-            to_chunk_size = 0
-
 
             while transaction_status is False:
-                to_chunk_size += configured_chunk_size
 
-                sql_limit = str(from_chunk_size) + "," + str(to_chunk_size)
+                sql_limit = str(from_chunk_size + 1 ) + ", " + str(configured_chunk_size)
 
                 print("limit is", sql_limit)
 
@@ -314,7 +311,7 @@ def send_services_received_payload(request):
 
                     service_received_items = []
                     print(service_received_items)
-                    from_chunk_size += configured_chunk_size
+                    from_chunk_size += configured_chunk_size - 1
 
                 else:
                     last_response_status_code = 200
@@ -338,9 +335,9 @@ def send_bed_occupancy_payload(request):
         queries = Query.objects.filter(message_type=message_type)
         payload_config = PayloadConfig.objects.filter(message_type=message_type).first()
 
-        chunk_size = payload_config.chunk_size
-
         last_response_status_code = None
+
+        configured_chunk_size = payload_config.chunk_size
 
         for query in queries:
             sql = query.sql_statement
@@ -350,10 +347,11 @@ def send_bed_occupancy_payload(request):
             format_sql = sql.replace(";", "")
             transaction_status = False #Transaction is still pending
 
-            initial_chunk_size = 0
+            from_chunk_size = 0
 
             while transaction_status is False:
-                sql_limit = str(initial_chunk_size) + "," + str(chunk_size)
+
+                sql_limit = str(from_chunk_size + 1) + ", " + str(configured_chunk_size)
 
                 final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '"+ "" + convert_date_formats(
                     date_from,date_format) + "" + "' AND " + "" + conditional_field + "" + " <= '" + "" + convert_date_formats(date_to, date_format) + "" "' LIMIT "+sql_limit+""
@@ -414,13 +412,12 @@ def send_bed_occupancy_payload(request):
 
                     transaction_status = False
 
-                    bed_occupancy_items.clear()
-                    initial_chunk_size += chunk_size + 1
-                    chunk_size += chunk_size
+                    bed_occupancy_items = []
+                    from_chunk_size += configured_chunk_size - 1
                 else:
                     last_response_status_code = 200
                     transaction_status = True
-                    bed_occupancy_items.clear()
+                    bed_occupancy_items = []
 
         if last_response_status_code == 200:
             return HttpResponse("Bed Occupancy data uploaded")
@@ -439,7 +436,7 @@ def send_revenue_received_payload(request):
         queries = Query.objects.filter(message_type=message_type)
         payload_config = PayloadConfig.objects.filter(message_type=message_type).first()
 
-        chunk_size = payload_config.chunk_size
+        configured_chunk_size = payload_config.chunk_size
 
         last_response_status_code = None
 
@@ -451,10 +448,10 @@ def send_revenue_received_payload(request):
             format_sql = sql.replace(";", "")
             transaction_status = False  # Transaction is still pending
 
-            initial_chunk_size = 0
+            from_chunk_size = 0
 
             while transaction_status is False:
-                sql_limit = str(initial_chunk_size) + "," + str(chunk_size)
+                sql_limit = str(from_chunk_size + 1) + ", " + str(configured_chunk_size)
 
                 final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '" + "" + convert_date_formats(
                     date_from,
@@ -521,13 +518,12 @@ def send_revenue_received_payload(request):
 
                     transaction_status = False
 
-                    revenue_received_items.clear()
-                    initial_chunk_size += chunk_size + 1
-                    chunk_size += chunk_size
+                    revenue_received_items = []
+                    from_chunk_size += configured_chunk_size - 1
                 else:
                     last_response_status_code = 200
                     transaction_status = True
-                    revenue_received_items.clear()
+                    revenue_received_items = []
 
         if last_response_status_code == 200:
             return HttpResponse("Revenue received data uploaded")
@@ -546,7 +542,7 @@ def send_death_by_disease_in_facility_payload(request):
         queries = Query.objects.filter(message_type=message_type)
         payload_config = PayloadConfig.objects.filter(message_type=message_type).first()
 
-        chunk_size = payload_config.chunk_size
+        configured_chunk_size = payload_config.chunk_size
 
         last_response_status_code = None
 
@@ -558,10 +554,10 @@ def send_death_by_disease_in_facility_payload(request):
             format_sql = sql.replace(";", "")
             transaction_status = False  # Transaction is still pending
 
-            initial_chunk_size = 0
+            from_chunk_size = 0
 
             while transaction_status is False:
-                sql_limit = str(initial_chunk_size) + "," + str(chunk_size)
+                sql_limit = str(from_chunk_size + 1) + ", " + str(configured_chunk_size)
 
                 final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '" + "" + convert_date_formats(
                     date_from,
@@ -635,8 +631,7 @@ def send_death_by_disease_in_facility_payload(request):
                     transaction_status = False
 
                     death_in_facility_items.clear()
-                    initial_chunk_size += chunk_size + 1
-                    chunk_size += chunk_size
+                    from_chunk_size += configured_chunk_size - 1
                 else:
                     last_response_status_code = 200
                     transaction_status = True
@@ -659,7 +654,7 @@ def send_death_by_disease_outside_facility_payload(request):
         queries = Query.objects.filter(message_type=message_type)
         payload_config = PayloadConfig.objects.filter(message_type=message_type).first()
 
-        chunk_size = payload_config.chunk_size
+        configured_chunk_size = payload_config.chunk_size
 
         last_response_status_code = None
 
@@ -671,10 +666,10 @@ def send_death_by_disease_outside_facility_payload(request):
             format_sql = sql.replace(";", "")
             transaction_status = False  # Transaction is still pending
 
-            initial_chunk_size = 0
+            from_chunk_size = 0
 
             while transaction_status is False:
-                sql_limit = str(initial_chunk_size) + "," + str(chunk_size)
+                sql_limit = str(from_chunk_size + 1) + ", " + str(configured_chunk_size)
 
                 final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '" + "" + convert_date_formats(
                     date_from,
@@ -733,8 +728,7 @@ def send_death_by_disease_outside_facility_payload(request):
                                              headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
 
                     death_outside_facility_items.clear()
-                    initial_chunk_size += chunk_size + 1
-                    chunk_size += chunk_size
+                    from_chunk_size += configured_chunk_size - 1
                 else:
                     last_response_status_code = 200
                     transaction_status = True
