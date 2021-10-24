@@ -233,7 +233,7 @@ def send_services_received_payload(request):
 
             format_sql = sql.replace(";", "")
 
-            from_chunk_size = 0
+            from_chunk_size = configured_chunk_size
 
             while transaction_status is False:
 
@@ -346,7 +346,7 @@ def send_bed_occupancy_payload(request):
             format_sql = sql.replace(";", "")
             transaction_status = False #Transaction is still pending
 
-            from_chunk_size = 0
+            from_chunk_size = configured_chunk_size
 
             while transaction_status is False:
 
@@ -447,7 +447,7 @@ def send_revenue_received_payload(request):
             format_sql = sql.replace(";", "")
             transaction_status = False  # Transaction is still pending
 
-            from_chunk_size = 0
+            from_chunk_size = configured_chunk_size
 
             while transaction_status is False:
                 sql_limit = str(from_chunk_size) + ", " + str(configured_chunk_size)
@@ -553,7 +553,7 @@ def send_death_by_disease_in_facility_payload(request):
             format_sql = sql.replace(";", "")
             transaction_status = False  # Transaction is still pending
 
-            from_chunk_size = 0
+            from_chunk_size = configured_chunk_size
 
             while transaction_status is False:
                 sql_limit = str(from_chunk_size) + ", " + str(configured_chunk_size)
@@ -665,7 +665,7 @@ def send_death_by_disease_outside_facility_payload(request):
             format_sql = sql.replace(";", "")
             transaction_status = False  # Transaction is still pending
 
-            from_chunk_size = 0
+            from_chunk_size = configured_chunk_size
 
             while transaction_status is False:
                 sql_limit = str(from_chunk_size) + ", " + str(configured_chunk_size)
