@@ -237,7 +237,7 @@ def send_services_received_payload(request):
 
             while transaction_status is False:
 
-                sql_limit = str(from_chunk_size + 1 ) + ", " + str(configured_chunk_size)
+                sql_limit = str(from_chunk_size ) + ", " + str(configured_chunk_size)
 
                 print("limit is", sql_limit)
 
@@ -310,8 +310,7 @@ def send_services_received_payload(request):
                     transaction_status = False
 
                     service_received_items = []
-                    print(service_received_items)
-                    from_chunk_size += configured_chunk_size - 1
+                    from_chunk_size += configured_chunk_size
 
                 else:
                     last_response_status_code = 200
@@ -351,7 +350,7 @@ def send_bed_occupancy_payload(request):
 
             while transaction_status is False:
 
-                sql_limit = str(from_chunk_size + 1) + ", " + str(configured_chunk_size)
+                sql_limit = str(from_chunk_size) + ", " + str(configured_chunk_size)
 
                 final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '"+ "" + convert_date_formats(
                     date_from,date_format) + "" + "' AND " + "" + conditional_field + "" + " <= '" + "" + convert_date_formats(date_to, date_format) + "" "' LIMIT "+sql_limit+""
@@ -413,7 +412,7 @@ def send_bed_occupancy_payload(request):
                     transaction_status = False
 
                     bed_occupancy_items = []
-                    from_chunk_size += configured_chunk_size - 1
+                    from_chunk_size += configured_chunk_size
                 else:
                     last_response_status_code = 200
                     transaction_status = True
@@ -451,7 +450,7 @@ def send_revenue_received_payload(request):
             from_chunk_size = 0
 
             while transaction_status is False:
-                sql_limit = str(from_chunk_size + 1) + ", " + str(configured_chunk_size)
+                sql_limit = str(from_chunk_size) + ", " + str(configured_chunk_size)
 
                 final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '" + "" + convert_date_formats(
                     date_from,
@@ -519,7 +518,7 @@ def send_revenue_received_payload(request):
                     transaction_status = False
 
                     revenue_received_items = []
-                    from_chunk_size += configured_chunk_size - 1
+                    from_chunk_size += configured_chunk_size
                 else:
                     last_response_status_code = 200
                     transaction_status = True
@@ -557,7 +556,7 @@ def send_death_by_disease_in_facility_payload(request):
             from_chunk_size = 0
 
             while transaction_status is False:
-                sql_limit = str(from_chunk_size + 1) + ", " + str(configured_chunk_size)
+                sql_limit = str(from_chunk_size) + ", " + str(configured_chunk_size)
 
                 final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '" + "" + convert_date_formats(
                     date_from,
@@ -631,7 +630,7 @@ def send_death_by_disease_in_facility_payload(request):
                     transaction_status = False
 
                     death_in_facility_items.clear()
-                    from_chunk_size += configured_chunk_size - 1
+                    from_chunk_size += configured_chunk_size
                 else:
                     last_response_status_code = 200
                     transaction_status = True
@@ -669,7 +668,7 @@ def send_death_by_disease_outside_facility_payload(request):
             from_chunk_size = 0
 
             while transaction_status is False:
-                sql_limit = str(from_chunk_size + 1) + ", " + str(configured_chunk_size)
+                sql_limit = str(from_chunk_size) + ", " + str(configured_chunk_size)
 
                 final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '" + "" + convert_date_formats(
                     date_from,
@@ -728,7 +727,7 @@ def send_death_by_disease_outside_facility_payload(request):
                                              headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
 
                     death_outside_facility_items.clear()
-                    from_chunk_size += configured_chunk_size - 1
+                    from_chunk_size += configured_chunk_size
                 else:
                     last_response_status_code = 200
                     transaction_status = True
