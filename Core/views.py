@@ -489,7 +489,11 @@ def send_revenue_received_payload(request):
                         dob = str(formatted_tuple[4])
                         med_svc_code = formatted_tuple[5]
                         payer_id = str(formatted_tuple[6])
-                        exemption_category_id = str(formatted_tuple[7])
+
+                        if str(formatted_tuple[7]) == "":
+                            exemption_category_id = "0"
+                        else:
+                            exemption_category_id = str(formatted_tuple[7])
                         billed_amount = int(formatted_tuple[8])
                         waived_amount = int(formatted_tuple[9])
                         service_provider_ranking_id = str(formatted_tuple[10])
