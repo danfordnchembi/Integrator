@@ -233,11 +233,11 @@ def send_services_received_payload(request):
 
             format_sql = sql.replace(";", "")
 
-            from_chunk_size = configured_chunk_size
+            from_chunk_size = 0
 
             while transaction_status is False:
 
-                sql_limit = str(from_chunk_size +1) + ", " + str(configured_chunk_size)
+                sql_limit = str(from_chunk_size) + ", " + str(configured_chunk_size)
 
                 print("limit is", sql_limit)
 
@@ -346,11 +346,11 @@ def send_bed_occupancy_payload(request):
             format_sql = sql.replace(";", "")
             transaction_status = False #Transaction is still pending
 
-            from_chunk_size = configured_chunk_size
+            from_chunk_size = 0
 
             while transaction_status is False:
 
-                sql_limit = str(from_chunk_size + 1) + ", " + str(configured_chunk_size)
+                sql_limit = str(from_chunk_size) + ", " + str(configured_chunk_size)
 
                 final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '"+ "" + convert_date_formats(
                     date_from,date_format) + "" + "' AND " + "" + conditional_field + "" + " <= '" + "" + convert_date_formats(date_to, date_format) + "" "' LIMIT "+sql_limit+""
@@ -447,10 +447,10 @@ def send_revenue_received_payload(request):
             format_sql = sql.replace(";", "")
             transaction_status = False  # Transaction is still pending
 
-            from_chunk_size = configured_chunk_size
+            from_chunk_size = 0
 
             while transaction_status is False:
-                sql_limit = str(from_chunk_size + 1) + ", " + str(configured_chunk_size)
+                sql_limit = str(from_chunk_size) + ", " + str(configured_chunk_size)
 
                 final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '" + "" + convert_date_formats(
                     date_from,
@@ -489,7 +489,11 @@ def send_revenue_received_payload(request):
                         dob = str(formatted_tuple[4])
                         med_svc_code = formatted_tuple[5]
                         payer_id = str(formatted_tuple[6])
-                        exemption_category_id = str(formatted_tuple[7])
+
+                        if str(formatted_tuple[7]) == "":
+                            exemption_category_id = "0"
+                        else:
+                            exemption_category_id = str(formatted_tuple[7])
                         billed_amount = int(formatted_tuple[8])
                         waived_amount = int(formatted_tuple[9])
                         service_provider_ranking_id = str(formatted_tuple[10])
@@ -553,10 +557,10 @@ def send_death_by_disease_in_facility_payload(request):
             format_sql = sql.replace(";", "")
             transaction_status = False  # Transaction is still pending
 
-            from_chunk_size = configured_chunk_size
+            from_chunk_size = 0
 
             while transaction_status is False:
-                sql_limit = str(from_chunk_size + 1) + ", " + str(configured_chunk_size)
+                sql_limit = str(from_chunk_size) + ", " + str(configured_chunk_size)
 
                 final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '" + "" + convert_date_formats(
                     date_from,
@@ -665,10 +669,10 @@ def send_death_by_disease_outside_facility_payload(request):
             format_sql = sql.replace(";", "")
             transaction_status = False  # Transaction is still pending
 
-            from_chunk_size = configured_chunk_size
+            from_chunk_size = 0
 
             while transaction_status is False:
-                sql_limit = str(from_chunk_size + 1) + ", " + str(configured_chunk_size)
+                sql_limit = str(from_chunk_size) + ", " + str(configured_chunk_size)
 
                 final_sql_statement = format_sql + " WHERE 1=1 AND " + "" + conditional_field + "" + " >= '" + "" + convert_date_formats(
                     date_from,
