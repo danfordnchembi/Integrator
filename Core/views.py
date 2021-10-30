@@ -277,7 +277,7 @@ def send_services_received_payload(request):
                         patient_id = formatted_tuple[2]
                         gender = formatted_tuple[3]
                         dob = str(formatted_tuple[4])
-                        med_svc_code = formatted_tuple[5]
+                        med_svc_code = get_cpt_code(formatted_tuple[5])
                         icd_10_code = formatted_tuple[6]
                         service_date = str(formatted_tuple[7])
                         service_provider_ranking_id = str(formatted_tuple[8])
@@ -487,7 +487,7 @@ def send_revenue_received_payload(request):
                         patient_id = str(formatted_tuple[2])
                         gender = formatted_tuple[3]
                         dob = str(formatted_tuple[4])
-                        med_svc_code = formatted_tuple[5]
+                        med_svc_code = get_cpt_code(formatted_tuple[5])
                         payer_id = str(formatted_tuple[6])
                         exemption_category_id = str(formatted_tuple[7])
                         billed_amount = int(formatted_tuple[8])
@@ -839,3 +839,13 @@ def convert_date_formats(date, date_format):
         return formatted_date
     except ValueError:
         pass
+
+
+def get_cpt_code(internal_code):
+    query = core_models.CPTCode.objects.filter(local_code=internal_code).first()
+
+    if query is None:
+        return internal_code
+    else:
+        cpt_code = query.code
+        return cpt_code
