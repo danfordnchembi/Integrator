@@ -57,12 +57,12 @@ def import_icd_10_codes(request):
 
     for x in data:
 
-        query = core_models.ICD10CodeCategory.objects.filter(hdr_local_id=x["id"]).first()
+        query = core_models.ICD10CodeCategory.objects.filter(identifier=x["identifier"]).first()
 
         if query is None:
             # # insert category
             instance_category = core_models.ICD10CodeCategory()
-            instance_category.hdr_local_id = x["id"]
+            instance_category.identifier = x["identifier"]
             instance_category.description = x["description"]
             instance_category.save()
         else:
@@ -72,17 +72,17 @@ def import_icd_10_codes(request):
         sub_categories = x["sub_category"]
 
         for sub_category in sub_categories:
-            sub_category_id = sub_category["id"]
+            identifier = sub_category["identifier"]
             sub_category_name = sub_category['description']
 
-            query = core_models.ICD10CodeSubCategory.objects.filter(hdr_local_id=sub_category_id).first()
+            query = core_models.ICD10CodeSubCategory.objects.filter(identifier=identifier).first()
 
             if query is None:
                 # # insert sub category
                 last_category = core_models.ICD10CodeCategory.objects.all().last()
 
                 instance_sub_category = core_models.ICD10CodeSubCategory()
-                instance_sub_category.hdr_local_id = sub_category_id
+                instance_sub_category.identifier = identifier
                 instance_sub_category.description = sub_category_name
                 instance_sub_category.category_id = last_category.id
                 instance_sub_category.save()
@@ -99,14 +99,13 @@ def import_icd_10_codes(request):
                 icd_10_code = sub_sub_category["code"]
                 icd_10_description = sub_sub_category["description"]
 
-                query = core_models.ICD10Code.objects.filter(hdr_local_id=icd_10_id).first()
+                query = core_models.ICD10Code.objects.filter(code=icd_10_code).first()
 
                 if query is None:
                     # # insert icd code
                     instance_icd_code = core_models.ICD10Code()
                     last_sub_category = core_models.ICD10CodeSubCategory.objects.all().last()
                     instance_icd_code.sub_category_id =  last_sub_category.id
-                    instance_icd_code.hdr_local_id = icd_10_id
                     instance_icd_code.code = icd_10_code
                     instance_icd_code.description = icd_10_description
                     instance_icd_code.save()
@@ -118,11 +117,10 @@ def import_icd_10_codes(request):
                 icd_sub_code_array = sub_sub_category["sub_code"]
 
                 for y in icd_sub_code_array:
-                    icd_10_sub_code_id = y["id"]
                     icd_10_sub_code = y["sub_code"]
                     icd_10_sub_code_description = y["description"]
 
-                    query = core_models.ICD10SubCode.objects.filter(hdr_local_id=icd_10_sub_code_id).first()
+                    query = core_models.ICD10SubCode.objects.filter(sub_code=icd_10_sub_code).first()
 
                     if query is None:
                         # # insert icd sub code
@@ -130,7 +128,6 @@ def import_icd_10_codes(request):
 
                         last_code = core_models.ICD10Code.objects.all().last()
                         instance_icd_sub_code.code_id = last_code.id
-                        instance_icd_sub_code.hdr_local_id = icd_10_sub_code_id
                         instance_icd_sub_code.sub_code = icd_10_sub_code
                         instance_icd_sub_code.description = icd_10_sub_code_description
                         instance_icd_sub_code.save()
