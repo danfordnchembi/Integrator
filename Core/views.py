@@ -848,10 +848,13 @@ def get_cpt_code(internal_code):
         return cpt_code
 
 
-def refine_service_received_payload(json_array):
+def refine_service_received_payload(payload):
+    json_array = json.loads(payload)
     message_type = json_array["messageType"]
     org_name = json_array["orgName"]
     facility_hfr_code = json_array["facilityHfrCode"]
+
+    print(message_type)
 
     items = json_array["items"]
     refined_array = []
