@@ -6,7 +6,7 @@ class ICD10CodeCategory(models.Model):
     def __str__(self):
         return '%s' %self.description
 
-    hdr_local_id = models.IntegerField()
+    identifier = models.CharField(max_length=255)
     description = models.CharField(max_length=255)
 
     class Meta:
@@ -18,7 +18,7 @@ class ICD10CodeSubCategory(models.Model):
     def __str__(self):
         return '%s' % self.description
 
-    hdr_local_id = models.IntegerField()
+    identifier = models.CharField(max_length=255)
     category = models.ForeignKey(ICD10CodeCategory,related_name='sub_category', on_delete=models.DO_NOTHING, null=True, blank=True)
     description = models.CharField(max_length=255)
 
@@ -31,7 +31,6 @@ class ICD10Code(models.Model):
     def __str__(self):
         return '%s' %self.description
 
-    hdr_local_id = models.IntegerField()
     sub_category = models.ForeignKey(ICD10CodeSubCategory,related_name='code', on_delete=models.DO_NOTHING, null=True, blank=True)
     code = models.CharField(max_length=255)
     description = models.CharField(max_length=255)
@@ -45,7 +44,6 @@ class ICD10SubCode(models.Model):
     def __str__(self):
         return '%d' %self.id
 
-    hdr_local_id = models.IntegerField()
     code = models.ForeignKey(ICD10Code,related_name='sub_code',on_delete=models.DO_NOTHING, null=True, blank=True)
     sub_code = models.CharField(max_length=255)
     description = models.CharField(max_length=255)

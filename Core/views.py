@@ -13,9 +13,9 @@ from django.core.files.storage import FileSystemStorage
 from django_tables2 import RequestConfig
 from .models import Query, PayloadConfig
 from datetime import datetime
-# from celery import Celery
+from celery import Celery
 
-# app = Celery()
+app = Celery()
 
 him_services_received_url = config('HIM_SERVICES_RECEIVED_URL')
 him_bed_occupancy_url = config('HIM_BED_OCCUPANCY_URL')
@@ -49,7 +49,7 @@ def get_index_page(request):
                                               "cpt_code_mapping_form":cpt_code_mapping_form
                                               })
 
-# @app.task
+@app.task
 def import_icd_10_codes(request):
     icd10_url = "https://him-dev.moh.go.tz:5000/get-all-icd10-codes"
     icd10_payload = requests.get(icd10_url)
@@ -57,12 +57,12 @@ def import_icd_10_codes(request):
 
     for x in data:
 
-        query = core_models.ICD10CodeCategory.objects.filter(hdr_local_id=x["id"]).first()
+        query = core_models.ICD10CodeCategory.objects.filter(identifier=x["identifier"]).first()
 
         if query is None:
             # # insert category
             instance_category = core_models.ICD10CodeCategory()
-            instance_category.hdr_local_id = x["id"]
+            instance_category.identifier = x["identifier"]
             instance_category.description = x["description"]
             instance_category.save()
         else:
@@ -72,17 +72,17 @@ def import_icd_10_codes(request):
         sub_categories = x["sub_category"]
 
         for sub_category in sub_categories:
-            sub_category_id = sub_category["id"]
+            identifier = sub_category["identifier"]
             sub_category_name = sub_category['description']
 
-            query = core_models.ICD10CodeSubCategory.objects.filter(hdr_local_id=sub_category_id).first()
+            query = core_models.ICD10CodeSubCategory.objects.filter(identifier=identifier).first()
 
             if query is None:
                 # # insert sub category
                 last_category = core_models.ICD10CodeCategory.objects.all().last()
 
                 instance_sub_category = core_models.ICD10CodeSubCategory()
-                instance_sub_category.hdr_local_id = sub_category_id
+                instance_sub_category.identifier = identifier
                 instance_sub_category.description = sub_category_name
                 instance_sub_category.category_id = last_category.id
                 instance_sub_category.save()
@@ -99,14 +99,13 @@ def import_icd_10_codes(request):
                 icd_10_code = sub_sub_category["code"]
                 icd_10_description = sub_sub_category["description"]
 
-                query = core_models.ICD10Code.objects.filter(hdr_local_id=icd_10_id).first()
+                query = core_models.ICD10Code.objects.filter(code=icd_10_code).first()
 
                 if query is None:
                     # # insert icd code
                     instance_icd_code = core_models.ICD10Code()
                     last_sub_category = core_models.ICD10CodeSubCategory.objects.all().last()
                     instance_icd_code.sub_category_id =  last_sub_category.id
-                    instance_icd_code.hdr_local_id = icd_10_id
                     instance_icd_code.code = icd_10_code
                     instance_icd_code.description = icd_10_description
                     instance_icd_code.save()
@@ -118,11 +117,10 @@ def import_icd_10_codes(request):
                 icd_sub_code_array = sub_sub_category["sub_code"]
 
                 for y in icd_sub_code_array:
-                    icd_10_sub_code_id = y["id"]
                     icd_10_sub_code = y["sub_code"]
                     icd_10_sub_code_description = y["description"]
 
-                    query = core_models.ICD10SubCode.objects.filter(hdr_local_id=icd_10_sub_code_id).first()
+                    query = core_models.ICD10SubCode.objects.filter(sub_code=icd_10_sub_code).first()
 
                     if query is None:
                         # # insert icd sub code
@@ -130,7 +128,6 @@ def import_icd_10_codes(request):
 
                         last_code = core_models.ICD10Code.objects.all().last()
                         instance_icd_sub_code.code_id = last_code.id
-                        instance_icd_sub_code.hdr_local_id = icd_10_sub_code_id
                         instance_icd_sub_code.sub_code = icd_10_sub_code
                         instance_icd_sub_code.description = icd_10_sub_code_description
                         instance_icd_sub_code.save()
@@ -141,7 +138,7 @@ def import_icd_10_codes(request):
 
     return HttpResponse("ICD10 codes uploaded to your system")
 
-# @app.task
+@app.task
 def import_cpt_codes(request):
     cpt_url = "https://him-dev.moh.go.tz:5000/get-all-cpt-codes"
     cpt_payload = requests.get(cpt_url)
@@ -278,7 +275,7 @@ def send_services_received_payload(request):
                         gender = formatted_tuple[3]
                         dob = str(formatted_tuple[4])
                         med_svc_code = get_cpt_code(formatted_tuple[5])
-                        icd_10_code = formatted_tuple[6]
+                        icd_10_code = str(formatted_tuple[6])
                         service_date = str(formatted_tuple[7])
                         service_provider_ranking_id = str(formatted_tuple[8])
                         visit_type = formatted_tuple[9]
@@ -299,7 +296,7 @@ def send_services_received_payload(request):
                         "items": service_received_items
                     }
 
-                    json_payload = json.dumps(payload)
+                    json_payload = refine_service_received_payload(json.dumps(payload))
 
                     response = requests.post(him_services_received_url, auth=(him_username, him_password),
                                              data=json_payload,
@@ -309,13 +306,13 @@ def send_services_received_payload(request):
 
                     transaction_status = False
 
-                    service_received_items = []
+                    service_received_items.clear()
                     from_chunk_size += configured_chunk_size
 
                 else:
                     last_response_status_code = 200
                     transaction_status = True
-                    service_received_items = []
+                    service_received_items.clear()
 
         if last_response_status_code == 200:
             return HttpResponse("Service received data uploaded")
@@ -324,7 +321,7 @@ def send_services_received_payload(request):
         else:
             return HttpResponse("General Failed")
 
-# @app.task
+@app.task
 def send_bed_occupancy_payload(request):
     if request.method == "POST":
         date_from = request.POST["date_from"]
@@ -383,11 +380,11 @@ def send_bed_occupancy_payload(request):
                     for bed_occupancy in bed_occupancies:
                         formatted_tuple = tuple(bed_occupancy)
 
-                        ward_id = formatted_tuple[0]
-                        ward_name = formatted_tuple[1]
-                        patient_id = formatted_tuple[2]
-                        admission_date = str(formatted_tuple[3])
-                        discharge_date = str(formatted_tuple[4])
+                        ward_id = str(formatted_tuple[0]).strip()
+                        ward_name = str(formatted_tuple[1]).strip()
+                        patient_id = str(formatted_tuple[2]).strip()
+                        admission_date = str(formatted_tuple[3]).strip()
+                        discharge_date = str(formatted_tuple[4]).strip()
 
                         bed_occupancy_object = {"wardId": ward_id, "wardName": ward_name, "patId": patient_id,
                                                 "admissionDate": admission_date, "dischargeDate": discharge_date}
@@ -425,7 +422,7 @@ def send_bed_occupancy_payload(request):
         else:
             return HttpResponse("failed")
 
-# @app.task
+@app.task
 def send_revenue_received_payload(request):
     if request.method == "POST":
         date_from = request.POST["date_from"]
@@ -531,7 +528,7 @@ def send_revenue_received_payload(request):
         else:
             return HttpResponse("failed")
 
-# @app.task
+@app.task
 def send_death_by_disease_in_facility_payload(request):
     if request.method == "POST":
         date_from = request.POST["date_from"]
@@ -621,7 +618,7 @@ def send_death_by_disease_in_facility_payload(request):
                         "items": death_in_facility_items
                     }
 
-                    json_payload = json.dumps(payload)
+                    json_payload = refine_death_within_facility_payload(json.dumps(payload))
 
                     response = requests.post(him_death_by_disease_in_facility_url, auth=(him_username, him_password), data=json_payload,
                                              headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
@@ -642,8 +639,8 @@ def send_death_by_disease_in_facility_payload(request):
             return HttpResponse("Unauthorized access")
         else:
             return HttpResponse("failed")
-
-# @app.task
+#
+@app.task
 def send_death_by_disease_outside_facility_payload(request):
     if request.method == "POST":
         date_from = request.POST["date_from"]
@@ -721,7 +718,7 @@ def send_death_by_disease_outside_facility_payload(request):
                         "items": death_outside_facility_items
                     }
 
-                    json_payload = json.dumps(payload)
+                    json_payload = refine_death_outside_facility_payload(json.dumps(payload))
 
                     response = requests.post(him_death_by_disease_outside_facility_url, auth=(him_username, him_password), data=json_payload,
                                              headers={'User-Agent': 'XY', 'Content-type': 'application/json'})
@@ -849,3 +846,160 @@ def get_cpt_code(internal_code):
     else:
         cpt_code = query.code
         return cpt_code
+
+
+def refine_service_received_payload(json_array):
+    message_type = json_array["messageType"]
+    org_name = json_array["orgName"]
+    facility_hfr_code = json_array["facilityHfrCode"]
+
+    items = json_array["items"]
+    refined_array = []
+    patients_array = []
+
+    # extract all unique patient ids
+    dept_name = ""
+    dept_id = ""
+    patient_id = ""
+    gender = ""
+    dob = ""
+    service_date = ""
+    service_provider_ranking_id = ""
+    visit_type = ""
+
+    for item in items:
+        patient_id = str(item["patId"]).strip()
+        patients_array.append(patient_id)
+
+    refined_patients_array = list(set(patients_array))
+
+    for i in range(len(refined_patients_array)):
+        patient_dict = [x for x in items if str(x['patId']).strip() == refined_patients_array[i]]
+
+        svc_code_list = []
+        confirmed_diagnosis = []
+
+        for record in patient_dict:
+            for key in record:
+                dept_name = str(record["deptName"]).strip()
+                dept_id = str(record["deptId"]).strip()
+                patient_id = str(record["patId"]).strip()
+                gender = str(record["gender"]).strip()
+                dob = str(record["dob"]).strip()
+                service_date = str(record["serviceDate"]).strip()
+                service_provider_ranking_id = str(record["serviceProviderRankingId"]).strip()
+                visit_type = str(record["visitType"]).strip()
+                if key == "medSvcCode":
+                    value = str(record[key]).strip()
+                    svc_code_list.append(value)
+
+                if key == "icd10Code":
+                    value = str(record[key]).strip()
+                    confirmed_diagnosis.append(value)
+
+        service_received_object = {"deptName": dept_name, "deptId": dept_id, "patId": patient_id,
+                                   "gender": gender, "dob": dob,
+                                   "medSvcCode": svc_code_list,
+                                   "confirmedDiagnosis": confirmed_diagnosis,
+                                   "differentialDiagnosis": confirmed_diagnosis,
+                                   "provisionalDiagnosis": [],
+                                   "serviceDate": service_date,
+                                   "serviceProviderRankingId": str(service_provider_ranking_id),
+                                   "visitType": visit_type
+                                   }
+
+        refined_array.append(service_received_object)
+
+    payload = {
+        "messageType": message_type,
+        "orgName": org_name,
+        "facilityHfrCode": facility_hfr_code,
+        "items": refined_array
+    }
+
+    return json.dumps(payload)
+
+
+def refine_death_within_facility_payload(json_array):
+    message_type = json_array["messageType"]
+    org_name = json_array["orgName"]
+    facility_hfr_code = json_array["facilityHfrCode"]
+
+    items = json_array["items"]
+    refined_array = []
+
+    for item in items:
+        ward_name = str(item["wardName"]).strip()
+        ward_id = str(item["wardId"]).strip()
+        patient_id = str(item["patId"]).strip()
+        first_name = str(item["firstName"]).strip()
+        middle_name = str(item["middleName"]).strip()
+        last_name = str(item["lastName"]).strip()
+        gender = str(item["gender"]).strip()
+        dob = str(item["dob"]).strip()
+        cause_of_death = str(item["icd10Code"]).strip()
+        date_death_occurred = str(item["dateDeathOccurred"]).strip()
+
+        service_received_object = {"wardName": ward_name,
+                               "wardId": ward_id,
+                               "patId": patient_id,
+                               "firstName": first_name,
+                               "middleName": middle_name,
+                               "lastName": last_name,
+                               "gender": gender,
+                               "dob": dob,
+                                "causeOfDeath" :cause_of_death,
+                                "immediateCauseOfDeath": "",
+                                "underlyingCauseOfDeath": cause_of_death,
+                               "dateDeathOccurred": str(date_death_occurred)
+                               }
+
+        refined_array.append(service_received_object)
+
+    payload = {
+        "messageType": message_type,
+        "orgName": org_name,
+        "facilityHfrCode": facility_hfr_code,
+        "items": refined_array
+    }
+
+    return json.dumps(payload)
+
+
+def refine_death_outside_facility_payload(json_array):
+    message_type = json_array["messageType"]
+    org_name = json_array["orgName"]
+    facility_hfr_code = json_array["facilityHfrCode"]
+
+    items = json_array["items"]
+    refined_array = []
+
+    for item in items:
+        ward_name = str(item["deathId"]).strip()
+        ward_id = str(item["placeOfDeathId"]).strip()
+        gender = str(item["gender"]).strip()
+        dob = str(item["dob"]).strip()
+        cause_of_death = str(item["icd10Code"]).strip()
+        date_death_occurred = str(item["dateDeathOccurred"]).strip()
+
+        service_received_object = {"wardName": ward_name,
+                               "wardId": ward_id,
+                               "gender": gender,
+                               "dob": dob,
+                                "causeOfDeath" :cause_of_death,
+                                "immediateCauseOfDeath": "",
+                                "underlyingCauseOfDeath": cause_of_death,
+                               "dateDeathOccurred": str(date_death_occurred)
+                               }
+
+        refined_array.append(service_received_object)
+
+    payload = {
+        "messageType": message_type,
+        "orgName": org_name,
+        "facilityHfrCode": facility_hfr_code,
+        "items": refined_array
+    }
+
+    return json.dumps(payload)
+
