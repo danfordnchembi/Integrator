@@ -854,8 +854,6 @@ def refine_service_received_payload(payload):
     org_name = json_array["orgName"]
     facility_hfr_code = json_array["facilityHfrCode"]
 
-    print(message_type)
-
     items = json_array["items"]
     refined_array = []
     patients_array = []
@@ -902,9 +900,9 @@ def refine_service_received_payload(payload):
 
         service_received_object = {"deptName": dept_name, "deptId": dept_id, "patId": patient_id,
                                    "gender": gender, "dob": dob,
-                                   "medSvcCode": svc_code_list,
-                                   "confirmedDiagnosis": confirmed_diagnosis,
-                                   "differentialDiagnosis": confirmed_diagnosis,
+                                   "medSvcCode": set(svc_code_list),
+                                   "confirmedDiagnosis": set(confirmed_diagnosis),
+                                   "differentialDiagnosis": set(confirmed_diagnosis),
                                    "provisionalDiagnosis": [],
                                    "serviceDate": service_date,
                                    "serviceProviderRankingId": str(service_provider_ranking_id),
@@ -923,7 +921,8 @@ def refine_service_received_payload(payload):
     return json.dumps(payload)
 
 
-def refine_death_within_facility_payload(json_array):
+def refine_death_within_facility_payload(payload):
+    json_array = json.loads(payload)
     message_type = json_array["messageType"]
     org_name = json_array["orgName"]
     facility_hfr_code = json_array["facilityHfrCode"]
@@ -969,7 +968,8 @@ def refine_death_within_facility_payload(json_array):
     return json.dumps(payload)
 
 
-def refine_death_outside_facility_payload(json_array):
+def refine_death_outside_facility_payload(payload):
+    json_array = json.loads(payload)
     message_type = json_array["messageType"]
     org_name = json_array["orgName"]
     facility_hfr_code = json_array["facilityHfrCode"]
