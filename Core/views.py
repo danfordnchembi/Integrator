@@ -900,9 +900,9 @@ def refine_service_received_payload(payload):
 
         service_received_object = {"deptName": dept_name, "deptId": dept_id, "patId": patient_id,
                                    "gender": gender, "dob": dob,
-                                   "medSvcCode": set(svc_code_list),
-                                   "confirmedDiagnosis": set(confirmed_diagnosis),
-                                   "differentialDiagnosis": set(confirmed_diagnosis),
+                                   "medSvcCode": list(set(svc_code_list)),
+                                   "confirmedDiagnosis": list(set(confirmed_diagnosis)),
+                                   "differentialDiagnosis": [],
                                    "provisionalDiagnosis": [],
                                    "serviceDate": service_date,
                                    "serviceProviderRankingId": str(service_provider_ranking_id),
@@ -911,14 +911,15 @@ def refine_service_received_payload(payload):
 
         refined_array.append(service_received_object)
 
-    payload = {
+    final_payload = {
         "messageType": message_type,
         "orgName": org_name,
         "facilityHfrCode": facility_hfr_code,
         "items": refined_array
     }
+    print(final_payload)
 
-    return json.dumps(payload)
+    return json.dumps(final_payload)
 
 
 def refine_death_within_facility_payload(payload):
