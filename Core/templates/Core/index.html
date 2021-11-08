@@ -269,7 +269,7 @@
             var today = new Date();
             var lastWeek = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 7);
             var lastWeekMonth = lastWeek.getMonth() + 1;
-            var lastWeekDay = lastWeek.getDate();
+            var lastWeekDay = ("0" + (lastWeek.getDate())).slice(-2);
             var lastWeekYear = lastWeek.getFullYear();
 
             var lastWeekDisplay = lastWeekYear + "-" + lastWeekMonth + "-" +lastWeekDay ;
